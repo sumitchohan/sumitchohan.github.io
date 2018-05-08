@@ -3,7 +3,7 @@
 <meta name=viewport content="width=device-width, initial-scale=1, maximum-scale=1">
 <meta name=apple-mobile-web-app-capable content=yes>
 <meta name=apple-mobile-web-app-status-bar-style content=black>
-<title>Test fullscreen</title>
+<title>Test</title>
 <style>
 html, body {
   margin: 0;
@@ -15,11 +15,14 @@ html, body {
   height: 100%;
   -webkit-box-sizing: border-box;
   box-sizing: border-box;
-  border: 8px solid #f00;
+  border: 1px solid #f00;
 }
 </style>
 
-<div id=page></div>
+<div id=page>
+<div>
+<span>Hello world!</span>
+</div>
 
 <script>
 var page = document.getElementById('page'),
@@ -27,7 +30,6 @@ var page = document.getElementById('page'),
     iphone = ~ua.indexOf('iPhone') || ~ua.indexOf('iPod'),
     ipad = ~ua.indexOf('iPad'),
     ios = iphone || ipad,
-    // Detect if this is running as a fullscreen app from the homescreen
     fullscreen = window.navigator.standalone,
     android = ~ua.indexOf('Android'),
     lastWidth = 0;
