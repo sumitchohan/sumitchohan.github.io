@@ -1,0 +1,115 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <title>Box Files</title>
+    <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.min.js"></script>
+</head>
+<body>
+    <div ng-app="myApp" ng-controller="myCtrl">
+        <div>
+            <div>
+                <textarea name="key" cols="60" rows="1" ng-model="key"></textarea>
+                <button ng-click="get()">Get</button>
+            </div>
+            <div>
+                <textarea name="value" cols="60" rows="16" ng-model="value"></textarea>
+                <button ng-click="save()">Save</button>
+            </div>
+            <div>
+                <pre ng-repeat="item in data">
+ &lt;annotation&gt;
+                &lt;folder&gt;train&lt;/folder&gt;
+                &lt;filename&gt;{{item.name}}&lt;/filename&gt;
+                &lt;path&gt;/c/TF/TF_ObjectDetection_API/images/train/{{item.name}}&lt;/path&gt;
+                &lt;source&gt;
+
+
+
+                &lt;database&gt;Unknown&lt;/database&gt;
+	&lt;/source&gt;
+                &lt;size&gt;
+                &lt;width&gt;300&lt;/width&gt;
+                &lt;height&gt;300&lt;/height&gt;
+                &lt;depth&gt;3&lt;/depth&gt;
+	&lt;/size&gt;
+                &lt;segmented&gt;0&lt;/segmented&gt;
+                    <pre  ng-repeat="box in item.boxes" >              
+  &lt;object&gt;
+                &lt;name&gt;{{box.Text}}&lt;/name&gt;
+                &lt;pose&gt;Unspecified&lt;/pose&gt;
+                &lt;truncated&gt;0&lt;/truncated&gt;
+                &lt;difficult&gt;0&lt;/difficult&gt;
+                &lt;bndbox&gt;
+                &lt;xmin&gt;{{box.X}}&lt;/xmin&gt;
+                &lt;ymin&gt;{{box.Y}}&lt;/ymin&gt;
+                &lt;xmax&gt;{{box.X + box.W}}&lt;/xmax&gt;
+                &lt;ymax&gt;{{box.Y + box.H}}&lt;/ymax&gt;
+		&lt;/bndbox&gt;
+	&lt;/object&gt;</pre> 
+&lt;/annotation&gt;
+                </pre>
+            </div>
+            <div>{{message}}</div>
+        </div>
+    </div>
+    <script>
+        function getParameterByName(name, url) {
+            if (!url) url = window.location.href;
+            name = name.replace(/[\[\]]/g, "\\$&");
+            var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+                results = regex.exec(url);
+            if (!results) return null;
+            if (!results[2]) return '';
+            return decodeURIComponent(results[2].replace(/\+/g, " "));
+        }
+        var app = angular.module('myApp', []);
+        app.controller('myCtrl', function ($scope, $http) {
+            $scope.tenantId = getParameterByName('tenantId');
+            if (!$scope.tenantId)
+                $scope.tenantId = "0";
+            $scope.key = "key1";
+            $scope.value = "";
+            $scope.result = "";
+            $scope.message = "";
+
+            $scope.get = function () {
+                var config = {
+                    headers: {}
+                }
+                $http.get('http://webapp.freeasphost.net/KeyValue.aspx?key=' + $scope.tenantId + "_" + $scope.key, config)
+                    .then(function (response) {
+                        if ((typeof response.data) === 'string') {
+                            $scope.value = response.data;
+                        }
+                        else {
+                            $scope.value = JSON.stringify(response.data);
+                        }
+                    },
+                    function (response) {
+                        $scope.message = "Error in retrieving data!!";
+                    });
+            }
+            $scope.save = function () {
+                var data = $scope.value;
+                var config = {
+                }
+                $http.post('http://webapp.freeasphost.net/KeyValue.aspx?key=' + $scope.tenantId + "_" + $scope.key, data, config)
+                    .then(function (response) {
+                        $scope.message = "Posted!!";
+                    },
+                    function (response) {
+                        $scope.message = "Error in posting!!";
+                    });
+            }
+            $scope.data = [{ "name": "Base_1524710002.130566.pngreshaped.png", "boxes": [{ "Name": "box2", "Text": "c1", "X": 249, "Y": 140, "W": 20, "H": 20 }, { "Name": "box3", "Text": "c1", "X": 377, "Y": 139, "W": 20, "H": 20 }, { "Name": "box4", "Text": "c1", "X": 455, "Y": 138, "W": 20, "H": 20 }, { "Name": "box5", "Text": "c1", "X": 282, "Y": 377, "W": 20, "H": 20 }, { "Name": "box6", "Text": "c2", "X": 393, "Y": 377, "W": 20, "H": 20 }, { "Name": "box7", "Text": "a1", "X": 260, "Y": 209, "W": 20, "H": 20 }, { "Name": "box8", "Text": "a1", "X": 257, "Y": 288, "W": 20, "H": 20 }, { "Name": "box9", "Text": "a2", "X": 435, "Y": 302, "W": 20, "H": 20 }, { "Name": "box10", "Text": "a2", "X": 531, "Y": 236, "W": 20, "H": 20 }, { "Name": "box12", "Text": "m2", "X": 366, "Y": 201, "W": 20, "H": 20 }, { "Name": "box13", "Text": "d1", "X": 314, "Y": 135, "W": 20, "H": 20 }, { "Name": "box14", "Text": "d1", "X": 521, "Y": 149, "W": 20, "H": 20 }, { "Name": "box15", "Text": "m1", "X": 331, "Y": 377, "W": 20, "H": 20 }, { "Name": "box16", "Text": "m1", "X": 525, "Y": 357, "W": 20, "H": 20 }, { "Name": "box17", "Text": "s", "X": 516, "Y": 287, "W": 20, "H": 20 }, { "Name": "box18", "Text": "m1", "X": 198, "Y": 444, "W": 20, "H": 20 }, { "Name": "box19", "Text": "w1", "X": 415, "Y": 197, "W": 20, "H": 20 }, { "Name": "box20", "Text": "w1", "X": 319, "Y": 197, "W": 20, "H": 20 }, { "Name": "box1", "Text": "a1", "X": 265, "Y": 71, "W": 20, "H": 20 }] }
+                , { "name": "Base_1524710010.257608.pngreshaped.png", "boxes": [{ "Name": "box21", "Text": "d2", "X": 341, "Y": 116, "W": 20, "H": 20 }, { "Name": "box22", "Text": "d2", "X": 389, "Y": 404, "W": 20, "H": 20 }, { "Name": "box23", "Text": "d2", "X": 210, "Y": 293, "W": 20, "H": 20 }, { "Name": "box24", "Text": "c2", "X": 255, "Y": 120, "W": 20, "H": 20 }, { "Name": "box25", "Text": "c2", "X": 208, "Y": 183, "W": 20, "H": 20 }, { "Name": "box26", "Text": "c2", "X": 318, "Y": 410, "W": 20, "H": 20 }, { "Name": "box27", "Text": "c2", "X": 498, "Y": 230, "W": 20, "H": 20 }, { "Name": "box28", "Text": "c2", "X": 496, "Y": 344, "W": 20, "H": 20 }, { "Name": "box29", "Text": "m2", "X": 387, "Y": 118, "W": 20, "H": 20 }, { "Name": "box30", "Text": "m2", "X": 453, "Y": 407, "W": 20, "H": 20 }, { "Name": "box31", "Text": "m1", "X": 500, "Y": 182, "W": 20, "H": 20 }, { "Name": "box32", "Text": "a2", "X": 507, "Y": 109, "W": 20, "H": 20 }, { "Name": "box33", "Text": "a2", "X": 503, "Y": 400, "W": 20, "H": 20 }, { "Name": "box34", "Text": "a2", "X": 214, "Y": 113, "W": 20, "H": 20 }, { "Name": "box35", "Text": "a1", "X": 503, "Y": 286, "W": 20, "H": 20 }, { "Name": "box36", "Text": "w1", "X": 211, "Y": 229, "W": 20, "H": 20 }, { "Name": "box37", "Text": "w1", "X": 453, "Y": 114, "W": 20, "H": 20 }, { "Name": "box38", "Text": "s", "X": 441, "Y": 254, "W": 20, "H": 20 }] }
+                , { "name": "Base_1524710015.381047.pngreshaped.png", "boxes": [{ "Name": "box39", "Text": "c3", "X": 265, "Y": 86, "W": 20, "H": 20 }, { "Name": "box40", "Text": "c3", "X": 473, "Y": 99, "W": 20, "H": 20 }, { "Name": "box41", "Text": "c3", "X": 538, "Y": 321, "W": 20, "H": 20 }, { "Name": "box42", "Text": "c3", "X": 120, "Y": 246, "W": 20, "H": 20 }, { "Name": "box43", "Text": "a2", "X": 272, "Y": 30, "W": 20, "H": 20 }, { "Name": "box44", "Text": "a2", "X": 524, "Y": 92, "W": 20, "H": 20 }, { "Name": "box45", "Text": "a2", "X": 125, "Y": 191, "W": 20, "H": 20 }, { "Name": "box46", "Text": "a2", "X": 431, "Y": 493, "W": 20, "H": 20 }, { "Name": "box47", "Text": "d2", "X": 349, "Y": 145, "W": 20, "H": 20 }, { "Name": "box48", "Text": "d2", "X": 475, "Y": 271, "W": 20, "H": 20 }, { "Name": "box49", "Text": "d2", "X": 363, "Y": 382.5, "W": 20, "H": 20 }, { "Name": "box50", "Text": "d2", "X": 235, "Y": 320, "W": 20, "H": 20 }, { "Name": "box51", "Text": "m1", "X": 475, "Y": 146, "W": 20, "H": 20 }, { "Name": "box52", "Text": "m1", "X": 424, "Y": 387, "W": 20, "H": 20 }, { "Name": "box53", "Text": "m1", "X": 233, "Y": 196, "W": 20, "H": 20 }, { "Name": "box54", "Text": "s", "X": 275, "Y": 186, "W": 20, "H": 20 }, { "Name": "box55", "Text": "x1", "X": 346, "Y": 210, "W": 20, "H": 20 }, { "Name": "box56", "Text": "x1", "X": 409, "Y": 272, "W": 20, "H": 20 }, { "Name": "box57", "Text": "b1", "X": 543, "Y": 269, "W": 20, "H": 20 }, { "Name": "box58", "Text": "s", "X": 433, "Y": 344, "W": 20, "H": 20 }, { "Name": "box59", "Text": "w1", "X": 421, "Y": 451, "W": 20, "H": 20 }, { "Name": "box60", "Text": "w1", "X": 167, "Y": 195, "W": 20, "H": 20 }, { "Name": "box61", "Text": "w1", "X": 372, "Y": 501, "W": 20, "H": 20 }] }
+                , { "name": "Base_1524710023.903272.pngreshaped.png", "boxes": [{ "Name": "box1", "Text": "d2", "X": 464, "Y": 164, "W": 20, "H": 20 }, { "Name": "box2", "Text": "d2", "X": 244, "Y": 151, "W": 20, "H": 20 }, { "Name": "box3", "Text": "d1", "X": 258, "Y": 372, "W": 20, "H": 20 }, { "Name": "box4", "Text": "c2", "X": 256, "Y": 87, "W": 20, "H": 20 }, { "Name": "box5", "Text": "c2", "X": 414, "Y": 89, "W": 20, "H": 20 }, { "Name": "box6", "Text": "c2", "X": 364, "Y": 407, "W": 20, "H": 20 }, { "Name": "box7", "Text": "c2", "X": 305, "Y": 325, "W": 20, "H": 20 }, { "Name": "box8", "Text": "m1", "X": 350, "Y": 150, "W": 20, "H": 20 }, { "Name": "box9", "Text": "m1", "X": 417, "Y": 276, "W": 20, "H": 20 }, { "Name": "box10", "Text": "m1", "X": 368, "Y": 327, "W": 20, "H": 20 }, { "Name": "box11", "Text": "m1", "X": 239, "Y": 267.5, "W": 20, "H": 20 }, { "Name": "box12", "Text": "a2", "X": 360, "Y": 93, "W": 20, "H": 20 }, { "Name": "box13", "Text": "a2", "X": 534, "Y": 140, "W": 20, "H": 20 }, { "Name": "box14", "Text": "a2", "X": 502, "Y": 271, "W": 20, "H": 20 }, { "Name": "box15", "Text": "s", "X": 412, "Y": 316, "W": 20, "H": 20 }, { "Name": "box16", "Text": "w1", "X": 287, "Y": 197, "W": 20, "H": 20 }, { "Name": "box17", "Text": "w1", "X": 526, "Y": 196, "W": 20, "H": 20 }, { "Name": "box18", "Text": "a2", "X": 182, "Y": 145, "W": 20, "H": 20 }] }];
+
+        });
+    </script>
+</body>
+</html>
