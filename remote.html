@@ -94,7 +94,7 @@ html, body {
 				var url_Log = 'https://api.keyvalue.xyz/d291d631/logKey'
                 var config = {
                 }
-                $http.get(url, config)
+                $http.get(url_Log, config)
                     .then(function (response) {                  
                         if ((typeof response.data) === 'string') {
                             $scope.logs = response.data;
