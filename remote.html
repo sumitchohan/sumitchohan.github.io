@@ -43,6 +43,7 @@ html, body {
                  <button ng-click="save()" class="button" >ON</button>
             </div>
              <div>{{message}}</div>
+			 <div> {{logs}}</div> 
         </div>
     </div>
     <script>
@@ -58,6 +59,7 @@ html, body {
         var app = angular.module('myApp', []);
         app.controller('myCtrl', function ($scope, $http) {
             var url = 'https://api.keyvalue.xyz/' + getParameterByName('key') + '/myKey';
+            var url_Log = 'https://api.keyvalue.xyz/' + getParameterByName('key') + '/myKey';
             $scope.save = function () {
                 var data = $scope.value;
                 var config = {
@@ -87,6 +89,24 @@ html, body {
                         $scope.message = "Error!!";
                     });
             }
+			function regreshLog()
+			{				
+				var url_Log = 'https://api.keyvalue.xyz/d291d631/logKey'
+                var config = {
+                }
+                $http.get(url, config)
+                    .then(function (response) {                  
+                        if ((typeof response.data) === 'string') {
+                            $scope.logs = response.data;
+                        }
+                        else {
+                            $scope.logs = JSON.stringify(response.data);
+                        }
+                    },
+                    function (response) {
+                        $scope.logs = "Error in retrieving logs!!";
+                    });
+			}
           refresh();
         });
     </script>
