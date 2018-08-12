@@ -40,7 +40,9 @@ html, body {
     <div ng-app="myApp" ng-controller="myCtrl">
         <div> 
             <div>
-                 <button ng-click="save()" class="button" >ON</button>
+                <button ng-click="save()" class="button" >ON</button>
+                <button ng-click="reset()" class="button" >RESET</button>
+                <button ng-click="off()" class="button" >OFF</button>
                  <button ng-click="refLog()" class="button" >Refresh</button>
             </div>
              <div>{{message}}</div>
@@ -58,24 +60,35 @@ html, body {
             return decodeURIComponent(results[2].replace(/\+/g, " "));
         }
         var app = angular.module('myApp', []);
+        var key="b3290c28";
         app.controller('myCtrl', function ($scope, $http) {
-            var url = 'https://api.keyvalue.xyz/' + getParameterByName('key') + '/myKey';
-            var url_Log = 'https://api.keyvalue.xyz/' + getParameterByName('key') + '/myKey';
+            var url = 'https://api.keyvalue.xyz/' +key+ '/myKey';
 	$scope.refLog=function(){
 		regreshLog();
 	}
-            $scope.save = function () {
+            $scope.save = function () { 
+                setSwitch('ON');
+            } 
+            $scope.reset = function () { 
+                setSwitch('RESET');
+            } 
+            $scope.off = function () { 
+                setSwitch('STOPPED');
+            } 
+            function setSwitch(val)
+            {
                 var data = $scope.value;
                 var config = {
                 }
-                $http.post(url+'/ON', data, config)
+                $http.post(url+'/'+val, data, config)
                     .then(function (response) {
                         $scope.message = "Posted!!";
                     },
                     function (response) {
                         $scope.message = "Error in posting!!";
                     });
-            } 
+
+            }
             function refresh() {
                 var data = $scope.value;
                 var config = {
