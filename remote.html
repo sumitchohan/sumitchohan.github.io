@@ -41,9 +41,10 @@ html, body {
         <div> 
             <div>
                  <button ng-click="save()" class="button" >ON</button>
+                 <button ng-click="refLog()" class="button" >Refresh</button>
             </div>
              <div>{{message}}</div>
-			 <div> {{logs}}</div> 
+		<div> {{logs}}</div> 
         </div>
     </div>
     <script>
@@ -60,6 +61,9 @@ html, body {
         app.controller('myCtrl', function ($scope, $http) {
             var url = 'https://api.keyvalue.xyz/' + getParameterByName('key') + '/myKey';
             var url_Log = 'https://api.keyvalue.xyz/' + getParameterByName('key') + '/myKey';
+	$scope.refLog=function(){
+		regreshLog();
+	}
             $scope.save = function () {
                 var data = $scope.value;
                 var config = {
