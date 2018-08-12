@@ -46,7 +46,13 @@ html, body {
                  <button ng-click="refLog()" class="button" >Refresh</button>
             </div>
              <div>{{message}}</div>
-		<div> {{logs}}</div> 
+        <div> {{logs}}</div> 
+        <table>
+            <tr ng-repeat="x in logItems">
+              <td>{{ x }}</td>
+            </tr>
+          </table>
+          
         </div>
     </div>
     <script>
@@ -63,9 +69,11 @@ html, body {
         var key="b3290c28";
         app.controller('myCtrl', function ($scope, $http) {
             var url = 'https://api.keyvalue.xyz/' +key+ '/myKey';
-	$scope.refLog=function(){
-		regreshLog();
-	}
+	        $scope.refLog=function(){
+		        regreshLog();
+                refresh();
+	        }
+            $scope.logItems=["ass","ddd","ssss"];
             $scope.save = function () { 
                 setSwitch('ON');
             } 
@@ -114,7 +122,7 @@ html, body {
                 $http.get(url_Log, config)
                     .then(function (response) {                  
                         if ((typeof response.data) === 'string') {
-                            $scope.logs = response.data;
+                            $scope.logs = response.data.replace("logremote.sh0","");
                         }
                         else {
                             $scope.logs = JSON.stringify(response.data);
