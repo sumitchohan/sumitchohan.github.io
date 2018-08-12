@@ -4,7 +4,7 @@
 <meta name=apple-mobile-web-app-capable content=yes>
 <meta name=apple-mobile-web-app-status-bar-style content=black>
 
-    <title>Key Value</title>
+    <title>Remote</title>
     <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.min.js"></script>
 <style>
@@ -122,7 +122,7 @@ html, body {
                 $http.get(url_Log, config)
                     .then(function (response) {                  
                         if ((typeof response.data) === 'string') {
-                            $scope.logs = response.data.replace("logremote.sh0","");
+                            $scope.logItems = response.data.split("logremote.sh0").reverse();
                         }
                         else {
                             $scope.logs = JSON.stringify(response.data);
