@@ -41,7 +41,7 @@ html, body {
         <div> 
             <div>
                 <button ng-click="save()" class="button" >ON</button>
-                <button ng-click="reset()" class="button" >RESET</button>
+                <button ng-click="reset()" class="button" >START</button>
                 <button ng-click="off()" class="button" >OFF</button>
                  <button ng-click="refLog()" class="button" >Refresh</button>
             </div>
@@ -70,7 +70,7 @@ html, body {
                 setSwitch('ON');
             } 
             $scope.reset = function () { 
-                setSwitch('RESET');
+                setSwitch('START');
             } 
             $scope.off = function () { 
                 setSwitch('STOPPED');
