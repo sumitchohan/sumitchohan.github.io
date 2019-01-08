@@ -85,7 +85,7 @@
             return decodeURIComponent(results[2].replace(/\+/g, " "));
         }
         var app = angular.module('myApp', []);
-        var key = "b3290c28";
+        var key = "041c2d55";
         app.controller('myCtrl', function($scope, $http) {
             var url = 'https://api.keyvalue.xyz/' + key + '/myKey';
             $scope.refLog = function() {
@@ -133,7 +133,7 @@
             }
 
             function regreshLog() {
-                var url_Log = 'https://api.keyvalue.xyz/d291d631/logKey'
+                var url_Log = 'https://api.keyvalue.xyz/2ecf4389/logKey'
                 var config = {}
                 $http.get(url_Log, config)
                     .then(function(response) {
