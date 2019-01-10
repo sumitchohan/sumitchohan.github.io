@@ -59,6 +59,13 @@
                         <button ng-click="refLog()" class="button" style="width: 100%">Refresh</button>
                     </td>
                 </tr>
+                <tr>
+                    <td>
+                        <button ng-click="runFile()" class="button" style="width: 100%">FILE</button>
+                    </td>
+                    <td> 
+                    </td>
+                </tr>
 
             </table>
             <div>
@@ -101,6 +108,10 @@
             }
             $scope.off = function() {
                 setSwitch('STOPPED');
+            }
+
+            $scope.runFile = function() {
+                setSwitch('FILE');
             }
 
             function setSwitch(val) {
