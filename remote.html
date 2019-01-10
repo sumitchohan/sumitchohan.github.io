@@ -138,7 +138,7 @@
                 $http.get(url_Log, config)
                     .then(function(response) {
                             if ((typeof response.data) === 'string') {
-                                $scope.logItems = response.data.split("logremote.sh0").reverse();
+                                $scope.logItems = response.data.split("<br>");
                             } else {
                                 $scope.logs = JSON.stringify(response.data);
                             }
