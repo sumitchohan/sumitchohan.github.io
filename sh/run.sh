@@ -1,3 +1,4 @@
+LogRemote "FILE"
 Read "Home"
 
 		trophy=$(cat ocred_Trophy.txt)
