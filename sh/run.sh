@@ -1,13 +1,22 @@
-LogRemote "FILE_1"
-
-echo "Trophy,674,82,23,69,255_255_255">Home.config
-echo "Gold,749,1073,24,138,255_255_255">>Home.config
-echo "Elixir,686,1082,26,132,255_255_255">>Home.config
-echo "DE,624,1101,26,115,255_255_255">>Home.config
-echo "Gems,565,1132,26,82,255_255_255">>Home.config
+LogRemote "FILE_2"
 
 
-Read "Home"
+Run()
+{
+	LogRemote "$1_Starting"
+	Log1 "Starting Run.. $1" 
+	Init
+	StopCOC
+	#am start -n com.x0.strai.frep/.FingerActivity
+	StartCOC	
+	Log1 "Trying Home"
+	Home
+	sleep 10
+	Zoom	
+	Log1 "Reached Home"	
+
+
+	Read "Home"
 
 		trophy=$(cat ocred_Trophy.txt)
 		de=$(cat ocred_DE.txt)
@@ -15,4 +24,53 @@ Read "Home"
 		elixir=$(cat ocred_Elixir.txt)
 		gems=$(cat ocred_Gems.txt)
 
-LogRemote "Trophy - $trophy Gold - $gold Elixir - $elixir DE - $de Gems - $gems"
+	LogRemote "Trophy - $trophy Gold - $gold Elixir - $elixir DE - $de Gems - $gems"
+
+
+	#SwitchID $1 
+	#Loose $1
+	quickTrainYPos=805
+	if [ "$1" = "2" ]
+	then
+		quickTrainYPos=997
+	fi
+	Tap 180 50
+	sleep 0.5
+	
+	Log1 "IsReadyForAttack $1 .. taking snapshot"	
+	#SendMessage "snapshot.sh"
+	ready=$(IsReadyForAttack)	
+	LogRemote "$1_Ready - $ready"
+	if [ "$ready" = "y" ]
+	then
+		Tap 697 $quickTrainYPos
+		sleep 0.5
+		Tap 410 1085
+		Tap 700 1130
+		Attack $1
+		sleep 60
+		StopCOC
+		Home
+		Zoom
+		Tap 180 50
+		sleep 0.5
+		Tap 697 $quickTrainYPos
+		sleep 0.5
+		Tap 410 1085
+		Tap 700 1130
+		sleep 1
+		StopCOC
+	else
+		echo "not ready"	
+		LogRemote "Not Ready $1 .."	
+		#SendMessage "snapshot.sh"
+		Tap 697 $quickTrainYPos
+		sleep 1
+		Tap 410 1085
+		sleep 1
+		Tap 410 1085
+		sleep 1
+		Tap 700 1130
+	fi
+	LogRemote "$1_Done"
+}
