@@ -1,8 +1,8 @@
-LogRemote "FILE_3"
+LogRemote "FILE_4"
 
 curl -s -k https://raw.githubusercontent.com/sumitchohan/AndroidAutoSh/master/update.sh -o update.sh
 source update.sh
 
 
-waitcount=36
-waitCount=36
+waitcount=24
+waitCount=24
