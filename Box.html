@@ -1,0 +1,267 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <title>Box Files</title>
+    <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.min.js"></script>
+</head>
+<body>
+    <div ng-app="myApp" ng-controller="myCtrl">
+        <div>
+            State:
+            <input type="text" ng-model="stateName" /><button ng-click="reset()">Reset</button><input type="checkbox" ng-checked="all">DefSize
+            <button ng-click="previous()">Previus</button>
+            <button ng-click="save()">Save</button>
+            <button ng-click="next()">Next</button>
+            {{message}}
+        </div> 
+        <canvas id="myCanvas" width="1200" height="800" style="border: 0px solid #d3d3d3;">
+            Your browser does not support the HTML5 canvas tag.
+        </canvas>
+        <img id="background" src="" style="display: none" />
+    </div>
+    <script>
+        function getParameterByName(name, url) {
+            if (!url) url = window.location.href;
+            name = name.replace(/[\[\]]/g, "\\$&");
+            var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+                results = regex.exec(url);
+            if (!results) return null;
+            if (!results[2]) return '';
+            return decodeURIComponent(results[2].replace(/\+/g, " "));
+        } 
+        function IsInRect(x, y, left, top, width, height, delta) {
+            console.log(x + "," + y + "," + left + "," + top + "," + width + "," + height + "," + delta)
+            result = x > left - delta && x < left + width + delta && y > top && y < top + height + delta;
+            console.log(result);
+            return result;
+        }
+        var app = angular.module('myApp', []);
+        var mouseIsDown = false;
+        var canvas = document.getElementById("myCanvas");
+        var ctx = canvas.getContext("2d");
+
+        app.controller('myCtrl', function ($scope, $http) {
+            $scope.tenantId = getParameterByName('tenantId');
+            if (!$scope.tenantId)
+                $scope.tenantId = "0";
+            $scope.stateName = "Test";
+            $scope.selectedItem = "a1";
+            $scope.boxes = [];
+            $scope.message = "";
+            $scope.images = [];
+
+            //$scope.images = ["Capture.PNG", "Capture1.PNG"];
+            $scope.selectedImageIndex = 0;
+            $scope.items = [{ "name": "A1", "Width": 100, "Height": 100 }, { "name": "C1", "Width": 100, "Height": 100 }, { "name": "W1", "Width": 100, "Height": 100 }];
+            var c = document.getElementById("myCanvas");
+            var ctx = c.getContext("2d");
+            var id = 1;
+            drag = {};
+            $scope.reset = function () {
+                $scope.boxes = [];
+                render();
+            }
+
+            $scope.previous = function () { 
+                if ($scope.selectedImageIndex > -1) {
+                    $scope.selectedImageIndex--;
+                    setImage();
+                }
+            }
+
+            $scope.save = function () {
+                saveData();
+            }
+
+            $scope.next = function () { 
+                if ($scope.selectedImageIndex < $scope.images.length) {
+                    $scope.selectedImageIndex++;
+                    setImage();
+                }
+            }
+            function setImage() {
+                if ($scope.selectedImageIndex > -1 && $scope.selectedImageIndex < $scope.images.length) {
+                    $scope.selectedImage = $scope.images[$scope.selectedImageIndex];
+                    //$scope.imageSrc = "http://localhost:56564/files/" + $scope.images[$scope.selectedImageIndex];
+                    $scope.imageSrc = "https://sumitchohan.github.io/reshaped/" + $scope.selectedImage;
+                    $scope.boxes = [];
+                    getData();
+                }
+            }
+            function saveData() {
+                //localStorage.setItem($scope.imageSrc, JSON.stringify($scope.boxes));
+
+                // use $.param jQuery function to serialize data from JSON
+
+                var data = {
+                    name: $scope.imageSrc,
+                    boxes: $scope.boxes
+                }
+
+                var config = { 
+                }
+                $http.post('http://webapp.freeasphost.net/KeyValue.aspx?key=' + $scope.tenantId + "_" + $scope.selectedImage, data, config)
+                    .then(function (response) {
+                        $scope.message = "Posted!!";
+                        $scope.points = [];
+                    },
+                    function (response) {
+                        $scope.message = "Error in posting!!";
+                    });
+            }
+            function getData() {
+                var config = {
+                    headers: {}
+                }
+                $http.get('http://webapp.freeasphost.net/KeyValue.aspx?key=' + $scope.tenantId + "_" + $scope.selectedImage, config)
+                    .then(function (response) {
+                        if (response.data.boxes) {
+                            $scope.boxes = response.data.boxes;
+                        }
+                        else {
+                            $scope.boxes = [];
+                        }
+                        render();
+                    },
+                    function (response) {
+                        $scope.message = "Error in retrieving data!!";
+                    });
+
+            }
+            function setImageInit() {
+                var config = {
+                    headers: {}
+                }
+                $http.get('http://webapp.freeasphost.net/KeyValue.aspx?key=' + $scope.tenantId + "_Images", config)
+                    .then(function (response) {
+                        if (response.data.images) {
+                            $scope.images = response.data.images;
+                        }
+                        else {
+                            $scope.images = [];
+                        }
+                        setImage();
+                    },
+                    function (response) {
+                        $scope.message = "Error in retrieving data!!";
+                    });
+            }
+            setImageInit();
+            canvas.onmousedown = function (e) {
+                if (e.button == 0) {
+                    drag.x = e.x + $(window).scrollLeft() - canvas.offsetLeft;
+                    drag.y = e.y + $(window).scrollTop() - canvas.offsetTop;
+                    mouseIsDown = true;
+                    //console.log(e.x + " " + e.y + " " + canvas.offsetLeft + " " + canvas.offsetTop);
+                }
+            }
+            canvas.onmouseup = function (e) {
+                if (e.button == 0) {
+                    if (mouseIsDown) {
+                        mouseIsDown = false;
+                        mouseClick(e);
+                    }
+                }
+                else if (e.button == 2) {
+                    rightClick(e);
+                }
+            }
+            canvas.onmousemove = function (e) {
+                if (!mouseIsDown) return;
+                drag.xx = e.x + $(window).scrollLeft() - canvas.offsetLeft;
+                drag.yy = e.y + $(window).scrollTop() - canvas.offsetTop;
+                render();
+                ctx.fillStyle = "#E5E059";
+                ctx.globalAlpha = 0.5;
+                ctx.fillRect(drag.x, drag.y, drag.xx - drag.x, drag.yy - drag.y);
+                ctx.globalAlpha = 1.0;
+                //render();
+                return false;
+            }
+            function rightClick(e) {
+                x = e.x + $(window).scrollLeft() - canvas.offsetLeft;
+                y = e.y + $(window).scrollTop() - canvas.offsetTop;
+                for (r = 0; r < $scope.boxes.length; r++) {
+                    if (IsInRect(x, y, $scope.boxes[r].X, $scope.boxes[r].Y, $scope.boxes[r].W, $scope.boxes[r].H, 0)) {
+                        $scope.boxes.splice(r, 1);
+                        break;
+                    }
+                }
+                render();
+                return false;
+            }
+            function mouseClick(e) {
+                x = e.x + $(window).scrollLeft() - canvas.offsetLeft;
+                y = e.y + $(window).scrollTop() - canvas.offsetTop;
+
+                if (drag.xx > drag.x + 4) {
+                    var rect = {
+                        "Name": "box" + id, "Text": $scope.selectedItem, "X": drag.x, "Y": drag.y, "W": drag.xx + 1 - drag.x, "H": drag.yy + 1 - drag.y
+                    };
+                    $scope.boxes.push(rect);
+                    drag.xx = 0;
+                    drag.yy = 0;
+                    id++;
+                }
+                else {
+
+                    var rect = {
+                        "Name": "box" + id, "Text": $scope.selectedItem, "X": drag.x - 10, "Y": drag.y - 10, "W": 20, "H": 20
+                    };
+                    if (drag.xx) {
+                        rect.X = ((drag.x + drag.xx) / 2) - 10;
+                        rect.Y = ((drag.y + drag.yy) / 2) - 10;
+                    }
+                    console.log(rect.X);
+                    console.log(rect.Y);
+                    console.log(drag.x);
+                    console.log(drag.xx);
+                    console.log(drag.y);
+                    console.log(drag.yy);
+                    $scope.boxes.push(rect);
+                    drag.xx = 0;
+                    drag.yy = 0;
+                    id++;
+                }
+                render();
+            }
+            function render() {
+                var img = document.getElementById("background");
+                if (!img.src.endsWith($scope.imageSrc)) {
+                    img.onload = function () {
+                        canvas.setAttribute("width", img.width);
+                        canvas.setAttribute("height", img.height);
+                        ctx.drawImage(img, 0, 0);
+                        renderRest();
+                    };
+                    img.src = $scope.imageSrc;
+                }
+                else {
+                    canvas.setAttribute("width", img.width);
+                    canvas.setAttribute("height", img.height);
+                    ctx.drawImage(img, 0, 0);
+                    renderRest();
+                }
+            }
+            function renderRest() {
+                for (r = 0; r < $scope.boxes.length; r++) {
+                    var rect = $scope.boxes[r];
+                    //console.log(rect.name + " " + rect.x + " " + rect.y + " " + rect.w + " " + rect.h);
+                    ctx.fillStyle = "#0000FF";
+                    ctx.globalAlpha = 0.5;
+                    ctx.fillRect(rect.X, rect.Y, rect.W, rect.H);
+                    ctx.globalAlpha = 1.0;
+                    ctx.font = "14px Arial";
+                    ctx.fillStyle = "#ff0000";
+                    ctx.fillText(rect.Text, rect.X + 1, rect.Y);
+                }
+            }
+            $('body').on('contextmenu', '#myCanvas', function (e) { return false; });
+            render();
+        });
+    </script>
+</body>
+</html>
