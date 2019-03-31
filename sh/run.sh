@@ -4,5 +4,5 @@ curl -s -k https://raw.githubusercontent.com/sumitchohan/AndroidAutoSh/master/up
 source update.sh
 
 
-waitcount=24
-waitCount=24
+waitcount=40
+waitCount=40
