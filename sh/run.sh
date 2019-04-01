@@ -1,8 +1,6 @@
-LogRemote "FILE_4"
+LogRemote "FILE_5"
 
 curl -s -k https://raw.githubusercontent.com/sumitchohan/AndroidAutoSh/master/update.sh -o update.sh
 source update.sh
 
-
-waitcount=40
-waitCount=40
+svc power stayon true
