@@ -94,10 +94,10 @@
         var app = angular.module('myApp', []);
         var key = "36a4fc98"; //https://api.keyvalue.xyz/36a4fc98/myKey
         app.controller('myCtrl', function($scope, $http) {
-            var url = 'https://api.keyvalue.xyz/' + key + '/myKey';
+            var url = 'http://timus.freeasphost.net/KeyValue.aspx?key=action';
             $scope.refLog = function() {
                 regreshLog();
-                refresh();
+                refresh();  
             }
             $scope.logItems = ["log"];
             $scope.save = function() {
@@ -144,7 +144,7 @@
             }
 
             function regreshLog() {
-                var url_Log = 'https://api.keyvalue.xyz/144f05f9/myKey'
+                var url_Log = 'http://timus.freeasphost.net/KeyValue.aspx?key=action'
                 var config = {}
                 $http.get(url_Log, config)
                     .then(function(response) {
