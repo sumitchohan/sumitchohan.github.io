@@ -13,3 +13,4 @@ LogRemote "Cleared"
 
 waitCount=15
 svc power stayon true
+
