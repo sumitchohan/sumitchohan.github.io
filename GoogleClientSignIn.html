@@ -3,7 +3,9 @@
 
 <head>
     <meta charset="utf-8" />
-    <title></title>
+    <title>Google Drive App</title>
+    <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.min.js"></script>
 </head>
 
 <body>
@@ -85,18 +87,6 @@
             }
         }
 
-        function listFiles() {
-            gapi.client.request({
-                'path': 'https://www.googleapis.com/drive/v2/files/'// + file.id
-                ,
-                'method': 'GET',
-                callback: function (theResponseJS, theResponseTXT) {
-                    $('#files').html(theResponseTXT);
-                    data = theResponseJS;
-                    //console.log(theResponseTXT);
-                }
-            });
-        }
         function updateSigninStatus(isSignedIn) {
             setSigninStatus();
         }
@@ -112,17 +102,53 @@
     <div id="user-name" style="display: inline; padding-left: 25px"></div>
     <div id="auth-status" style="display: inline; padding-left: 25px"></div>
 
-    <button id="list-drive-files">
-        List Google Drive Files
-    </button>
 
     <hr>
     <div id="files"></div>
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
     <script async defer src="https://apis.google.com/js/api.js" onload="this.onload=function(){};handleClientLoad()"
-        onreadystatechange="if (this.readyState === 'complete') this.onload()">
-        </script>
+            onreadystatechange="if (this.readyState === 'complete') this.onload()">
+    </script>
+
+    <div ng-app="myApp" ng-controller="myCtrl">
+        <button ng-click="listFiles()" style="width: 100%" class="button">List Files</button>
+        <span>{{message}}</span>
+        <ul>
+            <li ng-repeat="x in files">{{x.originalFilename}}</li>
+        </ul>
+
+    </div>
+    <script>
+        function getParameterByName(name, url) {
+            if (!url) url = window.location.href;
+            name = name.replace(/[\[\]]/g, "\\$&");
+            var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+                results = regex.exec(url);
+            if (!results) return null;
+            if (!results[2]) return '';
+            return decodeURIComponent(results[2].replace(/\+/g, " "));
+        }
+        var app = angular.module('myApp', []);
+        var key = "36a4fc98"; //https://api.keyvalue.xyz/36a4fc98/myKey
+        app.controller('myCtrl', function ($scope, $http) {
+
+            $scope.listFiles = function () {
+                $scope.message = "Loading...";
+                gapi.client.request({
+                    'path': 'https://www.googleapis.com/drive/v2/files/'// + file.id
+                    ,
+                    'method': 'GET',
+                    callback: function (theResponseJS, theResponseTXT) {
+                        //$('#files').html(theResponseTXT);
+                        $scope.files = theResponseJS.items;
+                        //console.log(theResponseTXT);
+                    }
+                });
+
+            }
+        });
+    </script>
 
 </body>
 
