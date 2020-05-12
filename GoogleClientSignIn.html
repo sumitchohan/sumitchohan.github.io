@@ -9,110 +9,16 @@
 </head>
 
 <body>
-    <script>
-        var GoogleAuth;
-        var SCOPE = 'https://www.googleapis.com/auth/drive.metadata.readonly';
-        function handleClientLoad() {
-            // Load the API's client and auth2 modules.
-            // Call the initClient function after the modules load.
-            gapi.load('client:auth2', initClient);
-        }
 
-        function initClient() {
-            // Retrieve the discovery document for version 3 of Google Drive API.
-            // In practice, your app can retrieve one or more discovery documents.
-            var discoveryUrl = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
-
-            // Initialize the gapi.client object, which app uses to make API requests.
-            // Get API key and client ID from API Console.
-            // 'scope' field specifies space-delimited list of access scopes.
-            gapi.client.init({
-                'clientId': '239315901615-nl8ieemkd8rbrugo61920jq7chs5f1dg.apps.googleusercontent.com',
-                'discoveryDocs': ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
-                'scope': SCOPE
-            }).then(function () {
-                GoogleAuth = gapi.auth2.getAuthInstance();
-
-                // Listen for sign-in state changes.
-                GoogleAuth.isSignedIn.listen(updateSigninStatus);
-
-                // Handle initial sign-in state. (Determine if user is already signed in.)
-                var user = GoogleAuth.currentUser.get();
-                setSigninStatus();
-
-                // Call handleAuthClick function when user clicks on
-                //      "Sign In/Authorize" button.
-                $('#sign-in-or-out-button').click(function () {
-                    handleAuthClick();
-                });
-                $('#revoke-access-button').click(function () {
-                    revokeAccess();
-                });
-                $('#list-drive-files').click(function () {
-                    listFiles();
-                });
-            });
-        }
-
-        function handleAuthClick() {
-            if (GoogleAuth.isSignedIn.get()) {
-                // User is authorized and has clicked "Sign out" button.
-                GoogleAuth.signOut();
-            } else {
-                // User is not signed in. Start Google auth flow.
-                GoogleAuth.signIn();
-            }
-        }
-
-        function revokeAccess() {
-            GoogleAuth.disconnect();
-        }
-
-        function setSigninStatus(isSignedIn) {
-            var user = GoogleAuth.currentUser.get();
-            var isAuthorized = user.hasGrantedScopes(SCOPE);
-            if (isAuthorized) {
-                $('#sign-in-or-out-button').html('Sign out');
-                $('#revoke-access-button').css('display', 'inline-block');
-                $('#auth-status').html('You are currently signed in and have granted ' +
-                    'access to this app.');
-
-                var profile = GoogleAuth.currentUser.get().getBasicProfile();
-                $('#user-name').html('ID: ' + profile.getId() + ';Full Name: ' + profile.getName() + ';Given Name: ' + profile.getGivenName() + ';Family Name: ' + profile.getFamilyName() + ';Image URL: ' + profile.getImageUrl() + ';Email: ' + profile.getEmail());
-            } else {
-                $('#sign-in-or-out-button').html('Sign In/Authorize');
-                $('#revoke-access-button').css('display', 'none');
-                $('#auth-status').html('You have not authorized this app or you are ' +
-                    'signed out.');
-            }
-        }
-
-        function updateSigninStatus(isSignedIn) {
-            setSigninStatus();
-        }
-        var data = {};
-    </script>
-
-    <button id="sign-in-or-out-button" style="margin-left: 25px">
-        Sign In/Authorize
-    </button>
-    <button id="revoke-access-button" style="display: none; margin-left: 25px">
-        Revoke access
-    </button>
-    <div id="user-name" style="display: inline; padding-left: 25px"></div>
-    <div id="auth-status" style="display: inline; padding-left: 25px"></div>
-
-
-    <hr>
-    <div id="files"></div>
-
+    <script src="https://apis.google.com/js/api.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-    <script async defer src="https://apis.google.com/js/api.js" onload="this.onload=function(){};handleClientLoad()"
-            onreadystatechange="if (this.readyState === 'complete') this.onload()">
-    </script>
-
     <div ng-app="myApp" ng-controller="myCtrl">
-        <button ng-click="listFiles()" style="width: 100%" class="button">List Files</button>
+        <div>{{profile.Name}}
+            <button ng-click="authClick()">{{Authorized?'SignOut':'Sign In/Authorize'}}</button>
+            <button ng-click="revokeAccess()" ng-show="Authorized">Revoke access</button>
+        </div>
+        <div>{{authStatus}}</div>
+        <button ng-click="updateFile()">UpdateFile</button>
         <span>{{message}}</span>
         <ul>
             <li ng-repeat="x in files">{{x.originalFilename}}</li>
@@ -130,24 +36,146 @@
             return decodeURIComponent(results[2].replace(/\+/g, " "));
         }
         var app = angular.module('myApp', []);
-        var key = "36a4fc98"; //https://api.keyvalue.xyz/36a4fc98/myKey
         app.controller('myCtrl', function ($scope, $http) {
 
-            $scope.listFiles = function () {
-                $scope.message = "Loading...";
-                gapi.client.request({
-                    'path': 'https://www.googleapis.com/drive/v2/files/'// + file.id
-                    ,
-                    'method': 'GET',
-                    callback: function (theResponseJS, theResponseTXT) {
-                        //$('#files').html(theResponseTXT);
-                        $scope.files = theResponseJS.items;
-                        //console.log(theResponseTXT);
-                    }
-                });
+            $scope.Authorized = false;
 
+            var GoogleAuth;
+            function handleClientLoad() {
+                gapi.load('client:auth2', initClient);
             }
+            var SCOPE = 'https://www.googleapis.com/auth/drive.file';
+            function initClient() {
+                var discoveryUrl = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
+                gapi.client.init({
+                    'clientId': '239315901615-nl8ieemkd8rbrugo61920jq7chs5f1dg.apps.googleusercontent.com',
+                    'discoveryDocs': ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
+                    'scope': SCOPE
+                }).then(function () {
+                    GoogleAuth = gapi.auth2.getAuthInstance();
+                    GoogleAuth.isSignedIn.listen(setSigninStatus);
+                    var user = GoogleAuth.currentUser.get();
+                    setSigninStatus();
+                });
+            }
+
+            function handleAuthClick() {
+                console.log(GoogleAuth.isSignedIn.get());
+                if (GoogleAuth.isSignedIn.get()) {
+                    console.log('sign out');
+                    GoogleAuth.signOut();
+                } else {
+                    console.log('sign in');
+                    GoogleAuth.signIn();
+                }
+            }
+            $scope.authClick = function () { handleAuthClick(); }
+
+            function revokeAccess() {
+                GoogleAuth.disconnect();
+            }
+            $scope.authStatus = 'You have not authorized this app or you are signed out.';
+            $scope.profile = { ID: '', Name: '', GivenName: '', FamilyName: '', EMail: '', ImageUrl: '' }
+
+            function setSigninStatus() {
+                console.log('setSigninStatus');
+                var user = GoogleAuth.currentUser.get();
+                isAuthorized = user.hasGrantedScopes(SCOPE);
+                $scope.Authorized = isAuthorized;
+                if (isAuthorized) {
+
+                    $scope.authStatus = 'You are currently signed in and have granted access to this app.';
+
+                    var profile = GoogleAuth.currentUser.get().getBasicProfile();
+
+                    $scope.profile = {
+                        ID: profile.getId(), Name: profile.getName(), GivenName: profile.getGivenName(),
+                        FamilyName: profile.getFamilyName(), EMail: profile.getEmail(), ImageUrl: profile.getImageUrl()
+                    }
+                } else {
+                    $scope.authStatus = 'You have not authorized this app or you are signed out.';
+                    $scope.profile = { ID: '', Name: '', GivenName: '', FamilyName: '', EMail: '', ImageUrl: '' }
+                }
+                $scope.$apply();
+            }
+            var data = {};
+            $scope.init = function () {
+                handleClientLoad();
+            }
+            $scope.refresh = function () { handleClientLoad(); }
+            $scope.updateFile=function(){
+                
+                updateFileContent("1G7mbeNeyEWn1c-hkM3pzJsiM36PLKcpj","Last Updated On ",(res)=>{console.log(res)});
+            };
+            $scope.listFiles = function () {
+                // gapi.client.request({
+                //     'path': 'https://www.googleapis.com/drive/v2/files/'// + file.id
+                //     ,
+                //     'method': 'GET',
+                //     callback: function (theResponseJS, theResponseTXT) {
+                //         //$('#files').html(theResponseTXT);
+                //         $scope.files = theResponseJS.items;
+                //         console.log(theResponseTXT);
+                //     }
+                // });
+                // createFileWithJSONContent("f123.txt", "data");
+                updateFileContent("1G7mbeNeyEWn1c-hkM3pzJsiM36PLKcpj","askjsdsdjksjdksjdkajksa");
+                
+                $scope.message = "Loading...";
+            }
+            var createFileWithJSONContent = function (name, data, callback) {
+                const boundary = '-------314159265358979323846';
+                const delimiter = "\r\n--" + boundary + "\r\n";
+                const close_delim = "\r\n--" + boundary + "--";
+
+                const contentType = 'application/json';
+
+                var metadata = {
+                    'name': name,
+                    'mimeType': contentType
+                };
+
+                var multipartRequestBody =
+                    delimiter +
+                    'Content-Type: application/json\r\n\r\n' +
+                    JSON.stringify(metadata) +
+                    delimiter +
+                    'Content-Type: ' + contentType + '\r\n\r\n' +
+                    data +
+                    close_delim;
+
+                var request = gapi.client.request({
+                    'path': '/upload/drive/v3/files',
+                    'method': 'POST',
+                    'params': { 'uploadType': 'multipart' },
+                    'headers': {
+                        'Content-Type': 'multipart/related; boundary="' + boundary + '"'
+                    },
+                    'body': multipartRequestBody
+                });
+                if (!callback) {
+                    callback = function (file) {
+                        console.log(file)
+                    };
+                }
+                request.execute(callback);
+            }
+            function updateFileContent(fileId, contentBlob, callback) {
+                var xhr = new XMLHttpRequest();
+                xhr.responseType = 'json';
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState != XMLHttpRequest.DONE) {
+                        return;
+                    }
+                    callback(xhr.response);
+                };
+                xhr.open('PATCH', 'https://www.googleapis.com/upload/drive/v3/files/' + fileId + '?uploadType=media');
+                xhr.setRequestHeader('Authorization', 'Bearer ' + gapi.auth.getToken().access_token);
+                xhr.send(contentBlob);
+            }
+            $scope.init();
         });
+    </script>
     </script>
 
 </body>
