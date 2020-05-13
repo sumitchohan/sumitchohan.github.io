@@ -1,0 +1,120 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+    <title>Receivable close validation</title>
+
+    <style>
+        body {
+            margin: 20px;
+            padding: 20px
+        }
+
+        .center {
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        table {
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            border: 1px solid black;
+            border-collapse: collapse;
+        }
+
+        tr.noBorder td {
+            border: 0;
+        }
+    </style>
+</head>
+</body>
+<div>
+
+    <div>
+        <p>&nbsp;</p>
+
+        <p style="text-align: center;"><em>CSX Transportation Corp – CSXT</em></p>
+        <p style="text-align: center;"><em>c/o TTX, 101 NORTH WACKER DRIVE</em></p>
+        <p style="text-align: center;"><em>CHICAGO</em><em>, ILLINOIS 60606</em></p>
+        <p style="text-align: center;"><em>(312) 984-3720</em></p>
+        <p style="text-align: right;">April 22, 2020</p>
+        <p style="text-align: right;">File: CSXT</p>
+        <table style="width:100%;">
+            <tbody>
+                <tr class="noBorder">
+                    <td style="width: 50%;">
+                        <p class="ng-binding">BILLED TO: GATX</p>
+                        <p class="ng-binding">GATX CORPORATION</p>
+                        <p class="ng-binding">233 S. Wacker Drive</p>
+                        <p class="ng-binding"></p>
+                        <p class="ng-binding"></p>
+                        <p class="ng-binding">CHICAGO,IL 60606</p>
+                    </td>
+                    <td style="width: 50%;">
+                        <p style="text-align: right;" class="ng-binding">Invoice Number: CX1910GATX</p>
+                        <p style="text-align: right;" class="ng-binding">Invoice Date: 2019/10/28</p>
+                        <p style="text-align: right;" class="ng-binding">Account Date: 19/10</p>
+                        <p style="text-align: right;" class="ng-binding">Invoice Amount:501651.02</p>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p>
+            During a recent internal audit of our billing we discovered that we undercharged you for the wheel set
+            applied to the car(s) listed below.
+        </p>
+        <table style="width:100%">
+            <thead>
+                <tr>
+                    <td style="width:26%">
+                        <strong>Car Number / Repair Date/ @ SPLC</strong>
+                    </td>
+                    <td style="width:64%">
+                        <strong>Exception</strong>
+                    </td>
+                    <td style="width:10%">
+                        <strong>Adjustment</strong>
+                    </td>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- ngRepeat: x1 in x.cars -->
+                <tr ng-repeat="x1 in x.cars" class="ng-scope">
+                    <td class="ng-binding">
+                        GATX, 221127, 2019/10/03, 256800
+                    </td>
+                    <td>
+                        Wheelset was invoiced with condition code B. Wheelset should be charged as condition code F.
+                    </td>
+                    <td class="ng-binding">
+                        $420.93
+                    </td>
+                </tr><!-- end ngRepeat: x1 in x.cars -->
+                <tr class="noBorder">
+                    <td></td>
+                    <td>
+                        <p style="text-align: right;">Total </p>
+                    </td>
+                    <td class="ng-binding">$420.93</td>
+                </tr>
+            </tbody>
+        </table>
+        <p class="ng-binding">
+            Please provide your CBA in the amount of $420.93 for these undercharges in accordance
+            with Rule
+            112.H.4.c
+        </p>
+        <p>Sincerely,</p>
+        <p>Ron Pulak<br>On behalf of CSXT</p>
+    </div>
+</div>
+</body>
+
+</html>
