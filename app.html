@@ -6,7 +6,19 @@
   <h1>redirecting...</h1>
 <body> 
   <script>
-    document.location="https://kite.zerodha.com"
+    var dt = new Date();
+    var minutes = (dt.getHours() * 60) + dt.getMinutes();
+    if (minutes > 270 && minutes < 1300){
+      
+    } 
+    else {
+      document.location="https://kite.zerodha.com"
+    }
+    setTimeout(() => {
+      document.location.href='https://sumitchohan.github.io/app.html';
+    }, 120000);
+      
+      
   </script>
 </body>
 </html>
