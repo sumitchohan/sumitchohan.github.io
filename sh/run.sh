@@ -1,4 +1,6 @@
-LogRemote "FILE_6"
+echo "Hello Client"
+
+#LogRemote "FILE_6"
 #rm log*
 #rm error* 
 #rm *.png
@@ -8,8 +10,8 @@ LogRemote "FILE_6"
 #rm *.png 
 #cd coc
 #LogRemote "Cleared" 
-curl -s -k https://raw.githubusercontent.com/sumitchohan/AndroidAutoSh/master/update.sh -o update.sh
-source update.sh  
+#curl -s -k https://raw.githubusercontent.com/sumitchohan/AndroidAutoSh/master/update.sh -o update.sh
+#source update.sh  
 #maxWaitCount=15
 #svc power stayon true
 
