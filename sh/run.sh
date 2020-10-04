@@ -1,5 +1,11 @@
 echo "Hello Client"
 
+dt=$(date '+%Y-%m-%d')
+curl https://keyvalue.glitch.me/addKeyValue --data "key=k55&value=HelloFromAndroid$dt"
+
+
+
+
 #LogRemote "FILE_6"
 #rm log*
 #rm error* 
