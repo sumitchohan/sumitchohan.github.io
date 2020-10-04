@@ -1,6 +1,6 @@
 echo "Hello Client"
 
-dt=$(date '+%Y-%m-%d')
+dt=$(date '+%Y-%m-%d_%H:%M:%S')
 curl https://keyvalue.glitch.me/addKeyValue --data "key=k55&value=HelloFromAndroid$dt"
 
 
