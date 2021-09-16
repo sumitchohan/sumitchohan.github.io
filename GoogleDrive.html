@@ -5,7 +5,7 @@
     <meta charset="utf-8" />
   </head>
   <body>
-    <p>Drive API Quickstart</p>
+    <p>Drive API Quickstart 1.1</p>
 
     <!--Add buttons to initiate auth sequence and sign out-->
     <button id="authorize_button" style="display: none;">Authorize</button>
@@ -23,7 +23,7 @@
 
       // Authorization scopes required by the API; multiple scopes can be
       // included, separated by spaces.
-      var SCOPES = 'https://www.googleapis.com/auth/drive.metadata.readonly';
+      var SCOPES = ["https://www.googleapis.com/auth/drive.metadata.readonly","https://www.googleapis.com/auth/drive.file"];
 
       var authorizeButton = document.getElementById('authorize_button');
       var signoutButton = document.getElementById('signout_button');
