@@ -4,6 +4,9 @@ function delay(ms) {
     });
 }
 
-await delay(10000)
+(async () => { 
+    await delay(3000);
+    document.getElementById("txt").innerText="done"
+})();
 
-document.getElementById("txt").innerText="done"
+
