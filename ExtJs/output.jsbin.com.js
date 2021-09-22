@@ -1,2 +1,12 @@
+function delay(ms) {
+    return new Promise(function (resolve) {
+        setTimeout(resolve, ms);
+    });
+}
 
-setTimeout(function(){ document.getElementById("txt").innerText="done";}, 3000);
+(async () => { 
+    await delay(3000);
+    document.getElementById("txt").innerText="done1";
+})();
+
+ 
