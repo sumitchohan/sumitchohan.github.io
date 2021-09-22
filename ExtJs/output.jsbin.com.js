@@ -6,7 +6,13 @@ function delay(ms) {
 
 (async () => { 
     await delay(3000);
-    document.getElementById("txt").innerText="done1";
+    CreateFile();
+    await delay(3000);
+    CreateFile();
+    await delay(3000);
+    CreateFile();
+    await delay(3000);
+    CreateFile();
 })();
 
  
