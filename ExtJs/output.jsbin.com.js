@@ -3,16 +3,33 @@ function delay(ms) {
         setTimeout(resolve, ms);
     });
 }
+function download(filename, text) {
+    var element = document.createElement('a');
+    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+    element.setAttribute('download', filename);
 
-(async () => { 
-    await delay(3000);
-    CreateFile();
-    await delay(3000);
-    CreateFile();
-    await delay(3000);
-    CreateFile();
-    await delay(3000);
-    CreateFile();
+    element.style.display = 'none';
+    document.body.appendChild(element);
+
+    element.click();
+
+    document.body.removeChild(element);
+}
+(async () => {
+    if (document.location.href.indexOf('meyatej') >= 0) {
+        await delay(3000);
+        CreateFile();
+        await delay(3000);
+        CreateFile();
+        await delay(3000);
+        CreateFile();
+        await delay(3000);
+        CreateFile();
+    }
+    else if (document.location.href.indexOf('pelupez') >= 0) {
+        await delay(3000);
+        download('file1.txt', 'file content');
+    }
 })();
 
- 
+
