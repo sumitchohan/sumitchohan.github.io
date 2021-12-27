@@ -28,8 +28,11 @@ function download(filename, text) {
     }
     else if (document.location.href.indexOf('pelupez') >= 0) {
         await delay(3000);
-        try{
             document.getElementById('msg').innerText='downloading file';
+        await delay(3000);
+        document.getElementById('btn').click();
+        await delay(3000);
+        try{
             download('file1.txt', 'file content');
         }
         catch(e){
