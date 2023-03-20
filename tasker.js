@@ -1,2 +1,2 @@
-alert('hello from gh 1');
-vibrate(2000);
+alert('hello from gh 2');
+writeFile('file2.txt','Hello there',false)
