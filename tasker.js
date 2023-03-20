@@ -1,6 +1,6 @@
-log("Script loaded! Version=1.5"); 
+log("Script loaded! Version=1.6"); 
 function writeToFile(filePath,fileContent,append){
-  if(tk){
+  if(!tk){
     log("tk not defined");
     log(`writeToFile will not be executed for path= ${filePath} and content=${fileContent}`);
   }
