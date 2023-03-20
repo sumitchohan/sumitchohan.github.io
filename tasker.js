@@ -1,4 +1,4 @@
-log("Script loaded! Version=1.4"); 
+log("Script loaded! Version=1.5"); 
 function writeToFile(filePath,fileContent,append){
   if(tk){
     log("tk not defined");
@@ -11,4 +11,4 @@ function writeToFile(filePath,fileContent,append){
 }
 fetch("https://sumitchohan.github.io/tasker.json")
   .then((response) => response.json())
-  .then((data) =>tk.writeFile('file2.txt',JSON.stringify(data),false));
+  .then((data) =>writeToFile('file2.txt',JSON.stringify(data),false));
