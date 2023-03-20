@@ -1,6 +1,8 @@
 const para = document.createElement("p");
-const node = document.createTextNode("Script loaded! Version=1.0");
+const node = document.createTextNode("Script loaded! Version=1.1");
 para.appendChild(node);
 const element = document.getElementById("div1");
 element.appendChild(para);
-tk.writeFile('file2.txt','Hello there',false)
+fetch("https://sumitchohan.github.io/tasker.json")
+  .then((response) => response.json())
+  .then((data) =>tk.writeFile('file2.txt',data,false));
