@@ -1,0 +1,30 @@
+<html>
+
+  <head>
+    <script>
+      var imported = document.createElement('script');
+      imported.src = 'https://sumitchohan.github.io/tasker.js?ts=' + Date.now();
+      document.head.appendChild(imported);
+
+      fetch("https://sumitchohan.github.io/tasker.json")
+        .then((response) => response.json())
+        .then((data) => console.log(data));
+
+      function log(message) {
+        var para = document.createElement("p");
+        var node = document.createTextNode(message);
+        para.appendChild(node);
+        var element = document.getElementById("div1");
+        element.appendChild(para);
+      }
+
+    </script>
+  </head>
+
+  <body style="background-color:lightblue">
+    <div id="div1">
+      <p>https://sumitchohan.github.io/tasker.js</p>
+    </div>
+  </body>
+
+</html>
