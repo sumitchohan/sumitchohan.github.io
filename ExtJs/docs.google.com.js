@@ -5,6 +5,7 @@ function delay(ms) {
     });
 } 
 (async () => {
+    await delay(3000);
     alert ('hello!')
 })();
 
