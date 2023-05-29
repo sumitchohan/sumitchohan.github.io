@@ -4,6 +4,9 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
     <script>
       $(document).ready(function () {
+  $("#btnGo").click(function(){
+    document.location.href = $("#link").val();
+  }); 
         $("#setLocalStorage").click(function () {
           localStorage.setItem($("#key").val(), $("#value").val());
         });
@@ -19,6 +22,9 @@
       <button id="getLocalStorage">Get</button>
       <p>Value: <input type="text" id="value" value="value" /></p>
       <button id="setLocalStorage">Set</button>
+      <p>NavigateTo: <input type="text" id="link" value="https://google.com"></p>
+
+<button id="btnGo">Go</button> 
     </div>
   </body>
 </html>
