@@ -1,1 +1,2 @@
-setTimeout(function(){  alert('hello');},3000)
+
+document.body.style.border = "5px solid red";
