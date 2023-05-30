@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+    <script>
+        $(document).ready(function () {
+           setTimeout(refresh,1000);
+        });
+        function refresh() {
+            $.get("https://kvdb.io/JwfPPmppqAiMBK6h9kDyFu/sync?"+new Date().getTime(), function (data, status) {
+                $("#div1").html(data);
+                setTimeout(refresh,1000);
+            });
+        }
+    </script>
+</head>
+
+<body>
+    <div id="div1"></div>
+</body>
+
+</html>
