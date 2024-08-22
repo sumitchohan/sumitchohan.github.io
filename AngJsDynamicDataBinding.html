@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AngularJS Data Binding with Excel Export</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        h1 {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px;
+            margin: 0;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .form-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .form-group label {
+            margin-right: 10px;
+            flex: 0 0 auto;
+        }
+        .form-group input[type="text"] {
+            flex: 1;
+            padding: 8px;
+            margin-right: 10px;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        textarea {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 8px;
+            margin-bottom: 10px;
+            resize: none;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+            margin-top: 10px;
+        }
+        ul li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+            background-color: #f1f1f1;
+            padding: 5px;
+            border-radius: 3px;
+        }
+        ul li button {
+            width: auto;
+            margin-left: 10px;
+        }
+        #customTemplateContainer {
+            margin-top: 10px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            background-color: #fafafa;
+        }
+        .floating-message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            z-index: 1000;
+        }
+        .floating-message.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body ng-app="myApp" ng-controller="myController">
+
+    <h1>Data Binding Example with Excel Export</h1>
+
+    <!-- Entry Name, Textbox, and Save Button in a Single Line -->
+    <div class="form-group">
+        <label for="entryName">Entry Name</label>
+        <input type="text" id="entryName" ng-model="entryName" placeholder="Enter a name for this entry">
+        <button ng-click="saveToLocalStorage()">Save as New Entry</button>
+        <button ng-click="exportToExcel()">Export as Excel</button>
+    </div>
+
+    <!-- Textarea for two-way data binding with records JSON -->
+    <h3>Records JSON</h3>
+    <textarea ng-model="recordsJSON" rows="10"></textarea>
+
+    <!-- Textarea for defining the custom HTML template -->
+    <h3>Custom HTML Template</h3>
+    <textarea ng-model="templateHTML" rows="10"></textarea>
+
+    <!-- List of saved entries with options to load them -->
+    <h3>Saved Entries</h3>
+    <ul>
+        <li ng-repeat="entry in savedEntries">
+            <strong>{{ entry.name }}</strong>
+            <button ng-click="loadFromLocalStorage(entry.name)">Load</button>
+            <button ng-click="deleteFromLocalStorage(entry.name)">Delete</button>
+        </li>
+    </ul>
+
+    <!-- Placeholder to render the compiled custom template -->
+    <div id="customTemplateContainer"></div>
+
+    <!-- Floating message element -->
+    <div class="floating-message" ng-class="{show: showMessage}" ng-bind="messageText"></div>
+
+    <script>
+        var app = angular.module('myApp', []);
+
+        app.controller('myController', function($scope, $compile, $timeout) {
+            $scope.records = [
+                {name: "Name1", value: "Value1"},
+                {name: "Name2", value: "Value2"}
+            ];
+
+            $scope.recordsJSON = angular.toJson($scope.records, true);
+
+            $scope.templateHTML = `
+                <table border="1" style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-repeat="item in records">
+                            <td>{{ item.name }}</td>
+                            <td>{{ item.value }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            `;
+
+            $scope.savedEntries = [];
+            $scope.showMessage = false;
+            $scope.messageText = '';
+
+            $scope.loadSavedEntries = function() {
+                var entries = JSON.parse(localStorage.getItem('entries') || '[]');
+                $scope.savedEntries = entries;
+            };
+
+            $scope.saveToLocalStorage = function() {
+                if (!$scope.entryName) {
+                    $scope.showMessageWithTimeout('Please enter a name for the entry!', true);
+                    return;
+                }
+
+                var entries = JSON.parse(localStorage.getItem('entries') || '[]');
+                var newEntry = {
+                    name: $scope.entryName,
+                    recordsJSON: $scope.recordsJSON,
+                    templateHTML: $scope.templateHTML
+                };
+
+                entries.push(newEntry);
+                localStorage.setItem('entries', JSON.stringify(entries));
+
+                $scope.loadSavedEntries();
+                $scope.showMessageWithTimeout('Template and JSON data saved as a new entry!');
+            };
+
+            $scope.loadFromLocalStorage = function(entryName) {
+                var entries = JSON.parse(localStorage.getItem('entries') || '[]');
+                var entry = entries.find(e => e.name === entryName);
+
+                if (entry) {
+                    $scope.recordsJSON = entry.recordsJSON;
+                    $scope.templateHTML = entry.templateHTML;
+                    $scope.records = angular.fromJson(entry.recordsJSON);
+                    $scope.renderTemplate();
+                    $scope.showMessageWithTimeout('Template and JSON data loaded from local storage!');
+                } else {
+                    $scope.showMessageWithTimeout('Entry not found in local storage!', true);
+                }
+            };
+
+            $scope.deleteFromLocalStorage = function(entryName) {
+                var entries = JSON.parse(localStorage.getItem('entries') || '[]');
+                var updatedEntries = entries.filter(e => e.name !== entryName);
+                localStorage.setItem('entries', JSON.stringify(updatedEntries));
+
+                $scope.loadSavedEntries();
+                $scope.showMessageWithTimeout('Entry deleted from local storage!');
+            };
+
+            $scope.renderTemplate = function() {
+                var container = angular.element(document.getElementById('customTemplateContainer'));
+                container.html($scope.templateHTML);
+                $compile(container.contents())($scope);
+            };
+
+            $scope.exportToExcel = function() {
+                // Prepare data for export
+                var ws_data = [];
+                ws_data.push(["Name", "Value"]);
+
+                $scope.records.forEach(function(record) {
+                    ws_data.push([record.name, record.value]);
+                });
+
+                var ws = XLSX.utils.aoa_to_sheet(ws_data);
+                var wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Records");
+
+                // Export and download the file
+                XLSX.writeFile(wb, "Records.xlsx");
+            };
+
+            $scope.showMessageWithTimeout = function(message, isError = false) {
+                $scope.messageText = message;
+                $scope.showMessage = true;
+                document.querySelector('.floating-message').style.backgroundColor = isError ? '#f44336' : '#4CAF50';
+
+                $timeout(function() {
+                    $scope.showMessage = false;
+                }, 3000);
+            };
+
+            $scope.$watch('recordsJSON', function(newVal) {
+                try {
+                    $scope.records = angular.fromJson(newVal);
+                    $scope.renderTemplate();
+                } catch (e) {
+                    console.error("Invalid JSON", e);
+                }
+            });
+
+            $scope.$watch('templateHTML', function(newVal) {
+                $scope.renderTemplate();
+            });
+
+            $scope.renderTemplate();
+            $scope.loadSavedEntries();
+        });
+    </script>
+    
+</body>
+</html>
