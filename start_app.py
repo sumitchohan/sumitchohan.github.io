@@ -2,6 +2,7 @@ import os, requests
 from azure.identity import ManagedIdentityCredential
 
 audience = 'api://2aa9a136-2275-4cae-9ae3-7fee9eaff787'
+print(os.environ("URL1"))
 #webhook_url = os.environ['WEBHOOK_URL']
 
 credential = ManagedIdentityCredential()
