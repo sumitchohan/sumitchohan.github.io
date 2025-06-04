@@ -1,21 +1,22 @@
 import os, requests
 from azure.identity import ManagedIdentityCredential
+from azure.servicebus import ServiceBusClient, ServiceBusMessage
 
-audience = 'api://2aa9a136-2275-4cae-9ae3-7fee9eaff787'
-print(os.environ("URL1"))
-#webhook_url = os.environ['WEBHOOK_URL']
-
+audience = f'api://{os.getenv("AMA_PUBLISHER_ID")}'
+url=os.getenv("URL1")
+resourceGroupId=os.getenv("RESOURCE_GROUP_ID")
+installQueueName=os.getenv("INSTALL_QUEUE_NAME")
+connectionString=f"Endpoint=sb://{installQueueName}.servicebus.windows.net/;SharedAccessKeyName=Send;SharedAccessKey={url}"
+print(connectionString)
+servicebus_client = ServiceBusClient.from_connection_string(conn_str=connectionString, logging_enable=True)
+queue_name = "install-requests"
 credential = ManagedIdentityCredential()
 token = credential.get_token(f'{audience}/.default')
 access_token = token.token
-
-try:
-  # response = requests.post(
-  #     webhook_url,
-  #     headers={'Authorization': f'Bearer {access_token}'},
-  #     json={'message': 'Token posted successfully'}
-  # )
-  print('Access Token:', access_token)
-  #print('Webhook response:', response.status_code)
-except Exception as e:
-  print('Webhook call failed:', e)
+with servicebus_client:
+    sender = servicebus_client.get_queue_sender(queue_name=queue_name)
+    with sender:
+        jsonPayload="{"+f"\"resourceGroupId\":\"{resourceGroupId}\",\"access_token\":\"{access_token}\""+"}"
+        message = ServiceBusMessage(jsonPayload)
+        sender.send_messages(message)
+        print("Message sent to Azure Service Bus queue.") 
