@@ -7,7 +7,6 @@ url=os.getenv("URL1")
 resourceGroupId=os.getenv("RESOURCE_GROUP_ID")
 installQueueName=os.getenv("INSTALL_QUEUE_NAME")
 connectionString=f"Endpoint=sb://{installQueueName}.servicebus.windows.net/;SharedAccessKeyName=Send;SharedAccessKey={url}"
-print(connectionString)
 servicebus_client = ServiceBusClient.from_connection_string(conn_str=connectionString, logging_enable=True)
 queue_name = "install-requests"
 credential = ManagedIdentityCredential()
