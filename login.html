@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PKCE Auth Flow Demo</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.4;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 10px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #0078d4 0%, #106ebe 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 300;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .content {
+            padding: 25px;
+        }
+
+        .form-section {
+            background: #f8f9fa;
+            border-radius: 6px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #e9ecef;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #495057;
+            font-size: 13px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 4px;
+            font-size: 13px;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            background: white;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #0078d4;
+            box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.1);
+        }
+
+        input[readonly] {
+            background: #f8f9fa;
+            color: #6c757d;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #0078d4 0%, #106ebe 100%);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            min-width: 160px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 120, 212, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent 0%, #dee2e6 50%, transparent 100%);
+            margin: 20px 0;
+        }
+
+        .result-section {
+            margin-bottom: 20px;
+        }
+
+        .result-section h3 {
+            color: #495057;
+            margin-bottom: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+        }
+
+        .result-section h3::before {
+            content: '';
+            width: 3px;
+            height: 16px;
+            background: #0078d4;
+            margin-right: 10px;
+            border-radius: 2px;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Monaco', 'Lucida Console', monospace;
+            font-size: 12px;
+            line-height: 1.4;
+            resize: vertical;
+            background: #f8f9fa;
+            color: #495057;
+            transition: border-color 0.3s ease;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #0078d4;
+            background: white;
+        }
+
+        .auth-flow {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .step-indicator {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+            border-radius: 6px;
+            border-left: 3px solid #0078d4;
+        }
+
+        .step-number {
+            width: 25px;
+            height: 25px;
+            background: #0078d4;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        .step-text {
+            flex: 1;
+            font-weight: 500;
+            color: #495057;
+            font-size: 14px;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 5px;
+            }
+            
+            .content {
+                padding: 15px;
+            }
+            
+            .form-section {
+                padding: 15px;
+            }
+            
+            .header {
+                padding: 15px;
+            }
+            
+            .header h1 {
+                font-size: 20px;
+            }
+        }
+
+        .alert {
+            padding: 10px 12px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            border-left: 3px solid;
+        }
+
+        .alert-info {
+            background: #e3f2fd;
+            border-color: #2196f3;
+            color: #1565c0;
+        }
+
+        .alert-warning {
+            background: #fff3e0;
+            border-color: #ff9800;
+            color: #ef6c00;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>Entra ID PKCE Authorization</h1></div>
+    
+    <div class="content">
+        <div class="form-section">
+            <div class="step-indicator">
+                <div class="step-number">1</div>
+                <div class="step-text">Configure your Azure AD application settings</div>
+            </div>
+            
+            <div class="form-group">
+                <label for="tenantId">Tenant ID</label>
+                <input type="text" id="tenantId" value="28949bdf-26fd-49e6-8d21-db9098219629">
+            </div>
+            
+            <div class="form-group">
+                <label for="clientId">Client ID (Redirect Url should match. Download this html page and serve as http://localhost:4200 if needed)</label>
+                <input type="text" id="clientId" value="a5e0d265-7dc6-4bfc-9611-3a1668fc1fd7">
+            </div>
+            
+            <div class="form-group">
+                <label for="scope">Scope</label>
+                <input type="text" id="scope" value="529508af-671d-4d3b-9efd-b915a7d8a983/.default">
+            </div>
+            
+            <div class="auth-flow">
+                <button class="btn" onclick="startAuth()">Start Authorization Flow</button>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="form-section">
+            <div class="step-indicator">
+                <div class="step-number">2</div>
+                <div class="step-text">Exchange authorization code for access token</div>
+            </div>
+            
+            <div class="form-group">
+                <label for="authCode">Authorization Code</label>
+                <input type="text" id="authCode" readonly placeholder="Will be populated automatically after authentication">
+            </div>
+            
+            <div class="auth-flow">
+                <button class="btn" onclick="exchangeCode()">Exchange Code for Token</button>
+            </div>
+        </div>
+
+        <div class="result-section">
+            <h3>Token Response</h3>
+            <textarea id="accessToken" rows="6" placeholder="Token response will appear here..."></textarea>
+        </div>
+
+        <div class="result-section">
+            <h3>Decoded Token Claims</h3>
+            <textarea id="decodedToken" rows="12" placeholder="Decoded JWT claims will appear here..."></textarea>
+        </div>
+    </div>
+</div>
+
+<script>
+    let codeVerifier = "";
+
+    function generateCodeVerifier() {
+        const array = new Uint8Array(32);
+        window.crypto.getRandomValues(array);
+        return btoa(String.fromCharCode(...array))
+            .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    }
+
+    async function generateCodeChallenge(verifier) {
+        const data = new TextEncoder().encode(verifier);
+        const digest = await window.crypto.subtle.digest("SHA-256", data);
+        return btoa(String.fromCharCode(...new Uint8Array(digest)))
+            .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    }
+
+    function decodeJWT(token) {
+        try {
+            const parts = token.split('.');
+            if (parts.length !== 3) {
+                return { error: 'Invalid JWT format' };
+            }
+
+            const header = JSON.parse(atob(parts[0].replace(/-/g, '+').replace(/_/g, '/')));
+            const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+            
+            return {
+                header: header,
+                payload: payload,
+                signature: parts[2]
+            };
+        } catch (error) {
+            return { error: 'Failed to decode JWT: ' + error.message };
+        }
+    }
+
+    async function startAuth() {
+        const tenantId = document.getElementById("tenantId").value.trim();
+        const clientId = document.getElementById("clientId").value.trim();
+        const scope = document.getElementById("scope").value.trim();
+
+        codeVerifier = generateCodeVerifier();
+        const codeChallenge = await generateCodeChallenge(codeVerifier);
+
+        // Store the code verifier in localStorage to persist across redirects
+        localStorage.setItem('pkce_code_verifier', codeVerifier);
+
+        const redirectUri = window.location.origin + window.location.pathname;
+
+        const authUrl = `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/authorize?` +
+            `client_id=${encodeURIComponent(clientId)}` +
+            `&response_type=code` +
+            `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+            `&response_mode=query` +
+            `&scope=${encodeURIComponent(scope)}` +
+            `&code_challenge=${encodeURIComponent(codeChallenge)}` +
+            `&code_challenge_method=S256`;
+
+        window.location = authUrl;
+    }
+
+    async function exchangeCode() {
+        const tenantId = document.getElementById("tenantId").value.trim();
+        const clientId = document.getElementById("clientId").value.trim();
+        const scope = document.getElementById("scope").value.trim();
+        const code = document.getElementById("authCode").value.trim();
+
+        // Retrieve the code verifier from localStorage
+        const storedCodeVerifier = localStorage.getItem('pkce_code_verifier');
+        if (!storedCodeVerifier) {
+            alert('Code verifier not found. Please restart the authentication flow.');
+            return;
+        }
+
+        const redirectUri = window.location.origin + window.location.pathname;
+
+        // Call Entra ID directly (requires SPA app registration)
+        const params = new URLSearchParams();
+        params.append("grant_type", "authorization_code");
+        params.append("client_id", clientId);
+        params.append("scope", scope);
+        params.append("code", code);
+        params.append("redirect_uri", redirectUri);
+        params.append("code_verifier", storedCodeVerifier);
+
+        const tokenUrl = `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`;
+
+        const resp = await fetch(tokenUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: params
+        });
+
+        const data = await resp.json();
+        document.getElementById("accessToken").value = JSON.stringify(data, null, 2);
+        
+        // Decode and display the access token if present
+        if (data.access_token) {
+            const decodedToken = decodeJWT(data.access_token);
+            document.getElementById("decodedToken").value = JSON.stringify(decodedToken, null, 2);
+        } else if (data.error) {
+            document.getElementById("decodedToken").value = "Token exchange failed - see Access Token section for error details";
+        }
+        
+        // Clear the stored code verifier after use (successful or failed)
+        localStorage.removeItem('pkce_code_verifier');
+    }
+
+    // If redirected back with a ?code=...
+    window.onload = function() {
+        const params = new URLSearchParams(window.location.search);
+        if (params.has("code")) {
+            document.getElementById("authCode").value = params.get("code");
+            window.history.replaceState({}, document.title, window.location.pathname); // remove query
+        }
+    }
+</script>
+</body>
+</html>
