@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Internet Connectivity Timeline</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 20px;
+      background: #f8f8f8;
+    }
+    canvas {
+      border: 1px solid #ccc;
+      display: block;
+      margin-top: 20px;
+    }
+    #status {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div id="status">Checking connectivity...</div>
+  <canvas id="timeline" width="1000" height="200"></canvas>
+
+  <script>
+    const canvas = document.getElementById("timeline");
+    const ctx = canvas.getContext("2d");
+    const statusDiv = document.getElementById("status");
+
+    const STORAGE_KEY = "connectivityEvents";
+
+    // Load saved events
+    let events = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+
+    // If empty, start with current state
+    if (events.length === 0) {
+      events.push({
+        type: navigator.onLine ? "online" : "offline",
+        time: Date.now()
+      });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
+    }
+
+    function addEvent(type) {
+      events.push({ type, time: Date.now() });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
+      drawTimeline();
+    }
+
+    window.addEventListener("online", () => {
+      statusDiv.textContent = "✅ Online";
+      statusDiv.style.color = "green";
+      addEvent("online");
+    });
+
+    window.addEventListener("offline", () => {
+      statusDiv.textContent = "❌ Offline";
+      statusDiv.style.color = "red";
+      addEvent("offline");
+    });
+
+    // Initial status
+    if (navigator.onLine) {
+      statusDiv.textContent = "✅ Online";
+      statusDiv.style.color = "green";
+    } else {
+      statusDiv.textContent = "❌ Offline";
+      statusDiv.style.color = "red";
+    }
+
+    function drawTimeline() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      if (events.length < 2) return;
+
+      const startTime = events[0].time;
+      const endTime = Date.now();
+      const totalDuration = endTime - startTime;
+
+      // Dynamic scaling (zoom out as time grows)
+      const pixelsPerMs = canvas.width / totalDuration;
+
+      // Draw baseline
+      ctx.beginPath();
+      ctx.moveTo(0, canvas.height / 2);
+      ctx.lineTo(canvas.width, canvas.height / 2);
+      ctx.strokeStyle = "#444";
+      ctx.stroke();
+
+      // Plot events
+      for (let i = 0; i < events.length - 1; i++) {
+        const e1 = events[i];
+        const e2 = events[i + 1];
+        const x1 = (e1.time - startTime) * pixelsPerMs;
+        const x2 = (e2.time - startTime) * pixelsPerMs;
+
+        ctx.fillStyle = e1.type === "offline" ? "rgba(255,0,0,0.5)" : "rgba(0,255,0,0.1)";
+        ctx.fillRect(x1, 50, x2 - x1, 100);
+      }
+
+      // Handle last event until now
+      const last = events[events.length - 1];
+      const xLast = (last.time - startTime) * pixelsPerMs;
+      ctx.fillStyle = last.type === "offline" ? "rgba(255,0,0,0.5)" : "rgba(0,255,0,0.1)";
+      ctx.fillRect(xLast, 50, (endTime - last.time) * pixelsPerMs, 100);
+
+      // Timestamps
+      ctx.fillStyle = "#000";
+      ctx.font = "12px sans-serif";
+      ctx.fillText("Start: " + new Date(startTime).toLocaleTimeString(), 5, 15);
+      ctx.fillText("Now: " + new Date(endTime).toLocaleTimeString(), canvas.width - 150, 15);
+    }
+
+    // Refresh timeline every 5 seconds
+    setInterval(drawTimeline, 5000);
+    drawTimeline();
+  </script>
+</body>
+</html>
