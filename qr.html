@@ -11,10 +11,18 @@
     --radius:12px;
   }
   *{box-sizing:border-box}
-  body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial; margin:0; padding:16px; background:linear-gradient(180deg,#041124,#07172a); color:#e6eef8}
+  body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial; margin:0; padding:8px; background:linear-gradient(180deg,#041124,#07172a); color:#e6eef8; overflow-x:hidden}
   .container{max-width:980px;margin:0 auto}
-  header{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+  header{display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
   h1{font-size:18px;margin:0}
+  
+  /* Tabs */
+  .tabs{display:flex;gap:8px;margin-bottom:12px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:8px}
+  .tab{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:10px 20px;border-radius:8px 8px 0 0;color:var(--muted);cursor:pointer;font-weight:600;font-size:14px;transition:all 0.2s}
+  .tab.active{background:linear-gradient(90deg,var(--accent),#7dd3fc22);color:#032226;border-color:var(--accent)}
+  .tab-content{display:none}
+  .tab-content.active{display:block}
+  
   .grid{
     display:grid;
     grid-template-columns: 1fr 420px;
@@ -23,12 +31,34 @@
   @media (max-width:880px){
     .grid{grid-template-columns:1fr}
   }
-  .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); padding:12px; border-radius:var(--radius); box-shadow:0 8px 30px rgba(0,0,0,0.5)}
+  .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); padding:10px; border-radius:var(--radius); box-shadow:0 8px 30px rgba(0,0,0,0.5)}
   .section-title{font-weight:700;font-size:13px;margin-bottom:8px}
+  
+  /* Mobile optimizations */
+  @media (max-width:768px){
+    body{padding:4px}
+    header{margin-bottom:4px}
+    h1{font-size:16px}
+    .small{font-size:11px}
+    .card{padding:8px}
+    .tabs{gap:4px;margin-bottom:8px}
+    .tab{padding:8px 16px;font-size:13px}
+    video{max-height:40vh}
+    textarea{min-height:60px;font-size:12px}
+    .row{flex-direction:column;align-items:stretch}
+    .row > *{width:100%}
+    #qr-holder{width:200px;height:200px}
+    .qr-preview-wrap{margin:0 auto}
+    .actions{flex-direction:column}
+    button{font-size:12px;padding:10px}
+    label{margin-top:6px;font-size:11px}
+    select,input[type="color"], input[type="range"], input[type="text"], input[type="file"]{padding:6px;font-size:12px}
+  }
+  
   /* scanner */
-  video{width:100%;height:auto;border-radius:10px; background:#000; display:block}
-  textarea{width:100%;min-height:84px;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:rgba(255,255,255,0.02);color:inherit}
-  button{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:8px 10px;border-radius:8px;color:inherit;cursor:pointer;font-weight:600}
+  video{width:100%;height:auto;border-radius:10px; background:#000; display:block;max-height:60vh}
+  textarea{width:100%;min-height:84px;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:rgba(255,255,255,0.02);color:inherit;font-size:13px}
+  button{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:8px 10px;border-radius:8px;color:inherit;cursor:pointer;font-weight:600;font-size:13px}
   .btn-primary{background:linear-gradient(90deg,var(--accent),#7dd3fc22);color:#032226;border:none}
   .small{font-size:12px;color:var(--muted)}
   .controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
@@ -38,8 +68,10 @@
   .row > *{flex:1}
   .qr-preview-wrap{display:flex;flex-direction:column;gap:8px;align-items:center}
   #qr-holder{width:260px;height:260px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:transparent}
-  .actions{display:flex;gap:8px;margin-top:8px}
-  .muted-note{font-size:12px;color:var(--muted);margin-top:6px}
+  .actions{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+  .muted-note{font-size:11px;color:var(--muted);margin-top:6px}
+  #frame-canvas{max-width:100%;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.3)}
+  .frame-preview{display:flex;justify-content:center;align-items:center;min-height:300px}
 </style>
 </head>
 <body>
@@ -47,13 +79,19 @@
     <header>
       <div>
         <h1>QR Scanner & Designer</h1>
-        <div class="small">Scan QR codes or design your own — add logo, pick colors, download PNG/SVG.</div>
+        <div class="small">Scan QR codes or design your own</div>
       </div>
       <div style="margin-left:auto" class="small" id="globalStatus">Idle</div>
     </header>
 
-    <div class="grid">
-      <!-- Left column: scanner + scanned output -->
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" data-tab="scan">📷 Scan</button>
+      <button class="tab" data-tab="design">🎨 Design</button>
+    </div>
+
+    <!-- Scan Tab Content -->
+    <div class="tab-content active" id="scan-tab">
       <div class="card" aria-live="polite">
         <div class="section-title">QR Scanner</div>
         <video id="video" autoplay playsinline></video>
@@ -67,16 +105,18 @@
           <div class="small">Engine: <strong id="scanEngine">jsQR</strong></div>
         </div>
 
-        <label for="scannedText" class="small">Scanned content</label>
+        <label for="scannedText" class="small" style="margin-top:8px">Scanned content</label>
         <textarea id="scannedText" placeholder="Scanned result will appear here"></textarea>
         <div class="row" style="margin-top:8px">
           <button id="copyScanned">Copy</button>
           <button id="openScanned">Open (URL)</button>
         </div>
-        <div class="muted-note">Tip: Use Safari and open page in new window if you're using JSBin. Camera requires HTTPS.</div>
+        <div class="muted-note">Tip: Camera requires HTTPS in most browsers.</div>
       </div>
+    </div>
 
-      <!-- Right column: generator -->
+    <!-- Design Tab Content -->
+    <div class="tab-content" id="design-tab">
       <div class="card">
         <div class="section-title">QR Designer</div>
 
@@ -155,24 +195,114 @@
           </div>
         </div>
 
-        <div style="display:flex;gap:8px;align-items:center;margin-top:12px">
-          <div class="qr-preview-wrap">
-            <div id="qr-holder"></div>
-            <div class="small">Live preview</div>
+        <div class="row" style="margin-top:8px">
+          <div>
+            <label class="small">Frame style</label>
+            <select id="frameStyle">
+              <option value="none" selected>None</option>
+              <option value="rounded">Rounded</option>
+              <option value="square">Square</option>
+              <option value="circle">Circle</option>
+              <option value="banner">Banner</option>
+              <option value="badge">Badge</option>
+            </select>
           </div>
-          <div style="flex:1">
+          <div>
+            <label class="small">Frame color</label>
+            <input id="frameColor" type="color" value="#06b6d4" />
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:8px">
+          <div>
+            <label class="small">Frame text (optional)</label>
+            <input id="frameText" type="text" placeholder="e.g., SCAN ME" />
+          </div>
+          <div>
+            <label class="small">Text position</label>
+            <select id="textPosition">
+              <option value="top" selected>Top</option>
+              <option value="bottom">Bottom</option>
+              <option value="both">Both</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:8px">
+          <div>
+            <label class="small">Font family</label>
+            <select id="fontFamily">
+              <option value="Inter, sans-serif" selected>Inter</option>
+              <option value="Arial, sans-serif">Arial</option>
+              <option value="Georgia, serif">Georgia</option>
+              <option value="'Courier New', monospace">Courier</option>
+              <option value="'Times New Roman', serif">Times</option>
+              <option value="Impact, sans-serif">Impact</option>
+            </select>
+          </div>
+          <div>
+            <label class="small">Text color</label>
+            <input id="textColor" type="color" value="#ffffff" />
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:8px">
+          <div>
+            <label class="small">Font size</label>
+            <input id="fontSize" type="range" min="12" max="48" value="24" />
+            <div class="small">Current: <span id="fontSizeVal">24</span>px</div>
+          </div>
+          <div>
+            <label class="small">Font weight</label>
+            <select id="fontWeight">
+              <option value="400">Normal</option>
+              <option value="600">Semi-bold</option>
+              <option value="700" selected>Bold</option>
+              <option value="900">Black</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:8px;align-items:flex-start;margin-top:12px;flex-direction:column">
+          <div class="qr-preview-wrap">
+            <div id="qr-holder" style="display:none"></div>
+            <div class="frame-preview">
+              <canvas id="frame-canvas"></canvas>
+            </div>
+            <div class="small" style="text-align:center;margin-top:8px">Live preview with frame</div>
+          </div>
+          <div style="width:100%">
             <div class="actions">
               <button id="generateBtn" class="btn-primary">Generate</button>
               <button id="downloadPng">Download PNG</button>
               <button id="downloadSvg">Download SVG</button>
               <button id="copyImage">Copy Image</button>
             </div>
-            <div class="muted-note">You can type special formats (Wi-Fi: SSID|WPA|password) or use the preset type to auto-format.</div>
+            <div class="muted-note">Use preset types or special formats (Wi-Fi: SSID|WPA|password).</div>
           </div>
         </div>
       </div>
     </div>
   </div>
+
+  <!-- Tab switching script -->
+  <script>
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        const targetTab = tab.getAttribute('data-tab');
+        
+        // Update active tab
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        
+        // Update active content
+        document.querySelectorAll('.tab-content').forEach(content => {
+          content.classList.remove('active');
+        });
+        document.getElementById(targetTab + '-tab').classList.add('active');
+      });
+    });
+  </script>
 
   <!-- Libraries -->
   <script src="https://unpkg.com/jsqr/dist/jsQR.js"></script>
@@ -359,6 +489,17 @@
   const logoSizeVal = document.getElementById('logoSizeVal');
   const hideDots = document.getElementById('hideDots');
 
+  const frameStyle = document.getElementById('frameStyle');
+  const frameColor = document.getElementById('frameColor');
+  const frameText = document.getElementById('frameText');
+  const textPosition = document.getElementById('textPosition');
+  const fontFamily = document.getElementById('fontFamily');
+  const textColor = document.getElementById('textColor');
+  const fontSize = document.getElementById('fontSize');
+  const fontSizeVal = document.getElementById('fontSizeVal');
+  const fontWeight = document.getElementById('fontWeight');
+  const frameCanvas = document.getElementById('frame-canvas');
+
   const generateBtn = document.getElementById('generateBtn');
   const downloadPng = document.getElementById('downloadPng');
   const downloadSvg = document.getElementById('downloadSvg');
@@ -444,6 +585,136 @@
     qr.append(qrHolder);
   }
 
+  // Render frame with QR code
+  async function renderFrame(){
+    // First render QR to hidden holder
+    renderPreview();
+    
+    // Wait a bit for QR to render
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    const qrCanvas = qrHolder.querySelector('canvas');
+    if(!qrCanvas) return;
+    
+    const style = frameStyle.value;
+    const ctx = frameCanvas.getContext('2d');
+    
+    // Calculate canvas size based on frame style
+    const qrSize = parseInt(sizeInput.value, 10);
+    const padding = style === 'none' ? 0 : 40;
+    const textHeight = style === 'none' ? 0 : (textPosition.value === 'both' ? parseInt(fontSize.value, 10) * 2 + 40 : parseInt(fontSize.value, 10) + 20);
+    
+    frameCanvas.width = qrSize + padding * 2;
+    frameCanvas.height = qrSize + padding * 2 + textHeight;
+    
+    // Clear canvas
+    ctx.clearRect(0, 0, frameCanvas.width, frameCanvas.height);
+    
+    // Draw frame background
+    if(style !== 'none'){
+      ctx.fillStyle = frameColor.value;
+      
+      if(style === 'rounded'){
+        drawRoundedRect(ctx, 0, 0, frameCanvas.width, frameCanvas.height, 20);
+      } else if(style === 'circle'){
+        const centerX = frameCanvas.width / 2;
+        const centerY = frameCanvas.height / 2;
+        const radius = Math.max(frameCanvas.width, frameCanvas.height) / 2;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+        ctx.fill();
+      } else if(style === 'banner'){
+        ctx.fillRect(0, 0, frameCanvas.width, frameCanvas.height);
+        // Add banner stripes
+        ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+        ctx.lineWidth = 2;
+        for(let i = 0; i < frameCanvas.height; i += 10){
+          ctx.beginPath();
+          ctx.moveTo(0, i);
+          ctx.lineTo(frameCanvas.width, i);
+          ctx.stroke();
+        }
+      } else if(style === 'badge'){
+        // Draw badge shape (octagon)
+        const size = Math.min(frameCanvas.width, frameCanvas.height);
+        const centerX = frameCanvas.width / 2;
+        const centerY = frameCanvas.height / 2;
+        const radius = size / 2;
+        ctx.beginPath();
+        for(let i = 0; i < 8; i++){
+          const angle = (i / 8) * Math.PI * 2 - Math.PI / 2;
+          const x = centerX + Math.cos(angle) * radius;
+          const y = centerY + Math.sin(angle) * radius;
+          if(i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.fill();
+      } else {
+        ctx.fillRect(0, 0, frameCanvas.width, frameCanvas.height);
+      }
+    }
+    
+    // Calculate QR position
+    let qrY = padding;
+    const text = frameText.value.trim();
+    const pos = textPosition.value;
+    
+    if(style !== 'none' && text && (pos === 'top' || pos === 'both')){
+      qrY += parseInt(fontSize.value, 10) + 20;
+    }
+    
+    // Draw white background for QR
+    ctx.fillStyle = bgColor.value;
+    const qrBgPadding = 10;
+    if(style === 'circle'){
+      ctx.beginPath();
+      ctx.arc(frameCanvas.width / 2, qrY + qrSize / 2, qrSize / 2 + qrBgPadding, 0, Math.PI * 2);
+      ctx.fill();
+    } else if(style === 'rounded' || style === 'badge'){
+      drawRoundedRect(ctx, padding - qrBgPadding, qrY - qrBgPadding, qrSize + qrBgPadding * 2, qrSize + qrBgPadding * 2, 10);
+    } else if(style !== 'none'){
+      ctx.fillRect(padding - qrBgPadding, qrY - qrBgPadding, qrSize + qrBgPadding * 2, qrSize + qrBgPadding * 2);
+    }
+    
+    // Draw QR code
+    ctx.drawImage(qrCanvas, padding, qrY, qrSize, qrSize);
+    
+    // Draw text
+    if(style !== 'none' && text){
+      ctx.fillStyle = textColor.value;
+      ctx.font = `${fontWeight.value} ${fontSize.value}px ${fontFamily.value}`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      
+      const centerX = frameCanvas.width / 2;
+      
+      if(pos === 'top' || pos === 'both'){
+        ctx.fillText(text, centerX, padding + parseInt(fontSize.value, 10) / 2 + 5);
+      }
+      
+      if(pos === 'bottom' || pos === 'both'){
+        const bottomText = pos === 'both' ? text : text;
+        ctx.fillText(bottomText, centerX, qrY + qrSize + parseInt(fontSize.value, 10) / 2 + 15);
+      }
+    }
+  }
+  
+  function drawRoundedRect(ctx, x, y, width, height, radius){
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + width - radius, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+    ctx.lineTo(x + width, y + height - radius);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+    ctx.lineTo(x + radius, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.closePath();
+    ctx.fill();
+  }
+
   // Update options on the fly (calls qr.update)
   function refreshQrInstance(){
     const size = parseInt(sizeInput.value,10);
@@ -466,7 +737,7 @@
 
     // for logo size: qr-code-styling v1 uses set of options: imageOptions.margin and we can set image width by giving blob URL? It supports image and imageOptions only.
     // We'll rely on library's internal scaling by setting size and imageOptions.margin; the image will be centered.
-    renderPreview();
+    renderFrame();
   }
 
   // keep a copy of the uploaded logo as data URL
@@ -487,7 +758,8 @@
   sizeInput.addEventListener('input', ()=>{ sizeVal.textContent = sizeInput.value; refreshQrInstance() });
   marginInput.addEventListener('input', ()=>{ marginVal.textContent = marginInput.value; refreshQrInstance() });
   logoSize.addEventListener('input', ()=>{ logoSizeVal.textContent = logoSize.value; refreshQrInstance() });
-  [typeSelect, contentInput, ecLevel, dotStyle, fgColor, bgColor, hideDots].forEach(el=>{
+  fontSize.addEventListener('input', ()=>{ fontSizeVal.textContent = fontSize.value; refreshQrInstance() });
+  [typeSelect, contentInput, ecLevel, dotStyle, fgColor, bgColor, hideDots, frameStyle, frameColor, frameText, textPosition, fontFamily, textColor, fontWeight].forEach(el=>{
     el.addEventListener('change', refreshQrInstance);
     el.addEventListener('input', refreshQrInstance);
   });
@@ -495,19 +767,27 @@
   // Generate button (ensures QR is up-to-date)
   generateBtn.addEventListener('click', refreshQrInstance);
 
-  // Download actions - use built-in download() from library
+  // Download actions - use frame canvas
   downloadPng.addEventListener('click', async ()=>{
     try{
-      await qr.download({ extension: 'png', name: 'qr-code' });
+      const link = document.createElement('a');
+      link.download = 'qr-code-framed.png';
+      link.href = frameCanvas.toDataURL('image/png');
+      link.click();
     }catch(e){
-      console.warn('download png failed, fallback: getRawData', e);
+      console.warn('download png failed', e);
       alert('Download failed in this browser.');
     }
   });
 
   downloadSvg.addEventListener('click', async ()=>{
     try{
-      await qr.download({ extension: 'svg', name: 'qr-code' });
+      // For SVG, fall back to QR library if no frame, otherwise use PNG
+      if(frameStyle.value === 'none'){
+        await qr.download({ extension: 'svg', name: 'qr-code' });
+      } else {
+        alert('SVG download only available without frame. Use PNG download for framed QR codes.');
+      }
     }catch(e){
       console.warn('download svg failed', e);
       alert('Download failed in this browser.');
@@ -517,20 +797,22 @@
   // Copy image to clipboard as PNG blob
   copyImage.addEventListener('click', async ()=>{
     try{
-      // qr.getRawData is library-specific; fallback: render to canvas and use toBlob
-      const blob = await qr._canvas.getContext('2d').canvas.toBlob ? await new Promise(res=> qr._canvas.getContext('2d').canvas.toBlob(res)) : null;
+      const blob = await new Promise(resolve => frameCanvas.toBlob(resolve, 'image/png'));
       if(blob && navigator.clipboard && navigator.clipboard.write){
-        await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
+        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
         copyImage.textContent = 'Copied ✓';
         setTimeout(()=> copyImage.textContent = 'Copy Image', 1200);
         return;
       }
       // Fallback: use download
-      await qr.download({ extension: 'png', name: 'qr-code' });
+      const link = document.createElement('a');
+      link.download = 'qr-code-framed.png';
+      link.href = frameCanvas.toDataURL('image/png');
+      link.click();
     }catch(e){
       console.warn('copy image failed', e);
       alert('Copy not supported in this browser — downloaded instead.');
-      try{ await qr.download({ extension:'png', name:'qr-code' }) }catch(_){}
+      downloadPng.click();
     }
   });
 
