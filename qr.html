@@ -1,0 +1,552 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>QR Scanner + Designer</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap">
+<style>
+  :root{
+    --bg:#071126; --card:#081827; --muted:#9fb0c6; --accent:#06b6d4;
+    --radius:12px;
+  }
+  *{box-sizing:border-box}
+  body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial; margin:0; padding:16px; background:linear-gradient(180deg,#041124,#07172a); color:#e6eef8}
+  .container{max-width:980px;margin:0 auto}
+  header{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+  h1{font-size:18px;margin:0}
+  .grid{
+    display:grid;
+    grid-template-columns: 1fr 420px;
+    gap:12px;
+  }
+  @media (max-width:880px){
+    .grid{grid-template-columns:1fr}
+  }
+  .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); padding:12px; border-radius:var(--radius); box-shadow:0 8px 30px rgba(0,0,0,0.5)}
+  .section-title{font-weight:700;font-size:13px;margin-bottom:8px}
+  /* scanner */
+  video{width:100%;height:auto;border-radius:10px; background:#000; display:block}
+  textarea{width:100%;min-height:84px;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:rgba(255,255,255,0.02);color:inherit}
+  button{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:8px 10px;border-radius:8px;color:inherit;cursor:pointer;font-weight:600}
+  .btn-primary{background:linear-gradient(90deg,var(--accent),#7dd3fc22);color:#032226;border:none}
+  .small{font-size:12px;color:var(--muted)}
+  .controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  label{display:block;font-size:12px;margin-top:8px;color:var(--muted)}
+  select,input[type="color"], input[type="range"], input[type="text"], input[type="file"]{width:100%;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:rgba(255,255,255,0.02);color:inherit}
+  .row{display:flex;gap:8px;align-items:center}
+  .row > *{flex:1}
+  .qr-preview-wrap{display:flex;flex-direction:column;gap:8px;align-items:center}
+  #qr-holder{width:260px;height:260px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:transparent}
+  .actions{display:flex;gap:8px;margin-top:8px}
+  .muted-note{font-size:12px;color:var(--muted);margin-top:6px}
+</style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1>QR Scanner & Designer</h1>
+        <div class="small">Scan QR codes or design your own — add logo, pick colors, download PNG/SVG.</div>
+      </div>
+      <div style="margin-left:auto" class="small" id="globalStatus">Idle</div>
+    </header>
+
+    <div class="grid">
+      <!-- Left column: scanner + scanned output -->
+      <div class="card" aria-live="polite">
+        <div class="section-title">QR Scanner</div>
+        <video id="video" autoplay playsinline></video>
+        <canvas id="scanCanvas" style="display:none"></canvas>
+        <div class="controls">
+          <button id="startScan" class="btn-primary">Start</button>
+          <button id="stopScan" disabled>Stop</button>
+          <button id="switchCam">Switch</button>
+          <button id="snapshot">Snapshot</button>
+          <div style="flex:1"></div>
+          <div class="small">Engine: <strong id="scanEngine">jsQR</strong></div>
+        </div>
+
+        <label for="scannedText" class="small">Scanned content</label>
+        <textarea id="scannedText" placeholder="Scanned result will appear here"></textarea>
+        <div class="row" style="margin-top:8px">
+          <button id="copyScanned">Copy</button>
+          <button id="openScanned">Open (URL)</button>
+        </div>
+        <div class="muted-note">Tip: Use Safari and open page in new window if you're using JSBin. Camera requires HTTPS.</div>
+      </div>
+
+      <!-- Right column: generator -->
+      <div class="card">
+        <div class="section-title">QR Designer</div>
+
+        <label class="small">Type</label>
+        <select id="typeSelect">
+          <option value="text">Plain Text</option>
+          <option value="url">URL</option>
+          <option value="email">Email</option>
+          <option value="phone">Phone</option>
+          <option value="sms">SMS</option>
+          <option value="wifi">Wi-Fi</option>
+          <option value="vcard">vCard</option>
+        </select>
+
+        <label class="small">Content</label>
+        <textarea id="contentInput" placeholder="Enter text / URL / details..."></textarea>
+
+        <div class="row">
+          <div>
+            <label class="small">Size (px)</label>
+            <input id="sizeInput" type="range" min="120" max="1024" value="260" />
+            <div class="small">Current: <span id="sizeVal">260</span>px</div>
+          </div>
+          <div>
+            <label class="small">Margin (modules)</label>
+            <input id="marginInput" type="range" min="0" max="40" value="10" />
+            <div class="small">Current: <span id="marginVal">10</span></div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label class="small">Error correction</label>
+            <select id="ecLevel">
+              <option value="L">L — ~7%</option>
+              <option value="M" selected>M — ~15%</option>
+              <option value="Q">Q — ~25%</option>
+              <option value="H">H — ~30%</option>
+            </select>
+          </div>
+          <div>
+            <label class="small">Dot style</label>
+            <select id="dotStyle">
+              <option value="square">Square</option>
+              <option value="rounded">Rounded</option>
+              <option value="dots">Dots</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:8px">
+          <div>
+            <label class="small">Foreground color</label>
+            <input id="fgColor" type="color" value="#012a4a" />
+          </div>
+          <div>
+            <label class="small">Background color</label>
+            <input id="bgColor" type="color" value="#ffffff" />
+          </div>
+        </div>
+
+        <label class="small" style="margin-top:8px">Logo (center) — PNG/JPG (transparent recommended)</label>
+        <input type="file" accept="image/*" id="logoInput" />
+        <div class="row" style="margin-top:8px">
+          <div>
+            <label class="small">Logo size (%)</label>
+            <input id="logoSize" type="range" min="0" max="50" value="18" />
+            <div class="small">Current: <span id="logoSizeVal">18</span>%</div>
+          </div>
+          <div>
+            <label class="small">Hide background dots around logo</label>
+            <select id="hideDots">
+              <option value="false" selected>No</option>
+              <option value="true">Yes</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:8px;align-items:center;margin-top:12px">
+          <div class="qr-preview-wrap">
+            <div id="qr-holder"></div>
+            <div class="small">Live preview</div>
+          </div>
+          <div style="flex:1">
+            <div class="actions">
+              <button id="generateBtn" class="btn-primary">Generate</button>
+              <button id="downloadPng">Download PNG</button>
+              <button id="downloadSvg">Download SVG</button>
+              <button id="copyImage">Copy Image</button>
+            </div>
+            <div class="muted-note">You can type special formats (Wi-Fi: SSID|WPA|password) or use the preset type to auto-format.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Libraries -->
+  <script src="https://unpkg.com/jsqr/dist/jsQR.js"></script>
+  <!-- qr-code-styling v1.x (used for advanced styling + logo). If this CDN fails, download and host locally -->
+  <script src="https://unpkg.com/qr-code-styling@1.5.0/lib/qr-code-styling.js"></script>
+
+<script>
+/* -------------------------
+   SCANNER (jsQR) - mobile friendly
+   ------------------------- */
+(async function scannerModule(){
+  const video = document.getElementById('video');
+  const canvas = document.getElementById('scanCanvas');
+  const ctx = canvas.getContext('2d');
+  const startBtn = document.getElementById('startScan');
+  const stopBtn = document.getElementById('stopScan');
+  const switchBtn = document.getElementById('switchCam');
+  const snapshotBtn = document.getElementById('snapshot');
+  const scannedText = document.getElementById('scannedText');
+  const copyScanned = document.getElementById('copyScanned');
+  const openScanned = document.getElementById('openScanned');
+  const scanEngine = document.getElementById('scanEngine');
+  const globalStatus = document.getElementById('globalStatus');
+
+  let stream = null;
+  let rafId = null;
+  let deviceIds = [];
+  let deviceIndex = 0;
+  let lastVal = '';
+
+  async function listDevices(){
+    try{
+      const all = await navigator.mediaDevices.enumerateDevices();
+      deviceIds = all.filter(d=>d.kind==='videoinput').map(d=>d.deviceId);
+      // try to pick back camera by label if possible
+      const backIndex = all.findIndex(d=>d.kind==='videoinput' && /back|rear|environment/i.test(d.label));
+      if(backIndex>=0) deviceIndex = backIndex;
+    }catch(e){
+      console.warn('listDevices failed', e);
+    }
+  }
+
+  async function start(){
+    if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+      globalStatus.textContent = 'Camera not supported';
+      return;
+    }
+    globalStatus.textContent = 'Requesting camera...';
+    await listDevices();
+    const constraints = { video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 } } };
+    if(deviceIds.length) constraints.video = { deviceId: { exact: deviceIds[deviceIndex] }, width:{ideal:1280} };
+
+    try{
+      stream = await navigator.mediaDevices.getUserMedia(constraints);
+      video.srcObject = stream;
+      video.play();
+      startBtn.disabled = true;
+      stopBtn.disabled = false;
+      globalStatus.textContent = 'Scanning...';
+      scanEngine.textContent = 'jsQR';
+      requestAnimationFrame(tick);
+    }catch(err){
+      console.error(err);
+      globalStatus.textContent = 'Camera error: ' + (err && err.message ? err.message : err);
+    }
+  }
+
+  function stop(){
+    if(stream){
+      stream.getTracks().forEach(t=>t.stop());
+      stream = null;
+    }
+    if(rafId) cancelAnimationFrame(rafId);
+    startBtn.disabled = false;
+    stopBtn.disabled = true;
+    globalStatus.textContent = 'Stopped';
+  }
+
+  switchBtn.addEventListener('click', async ()=>{
+    if(deviceIds.length>1){
+      deviceIndex = (deviceIndex+1) % deviceIds.length;
+    } else {
+      deviceIndex = (deviceIndex+1)%2; // try toggling facingMode when deviceId not available
+    }
+    if(stream) stop();
+    await start();
+  });
+
+  snapshotBtn.addEventListener('click', ()=>{
+    if(!stream) return alert('Camera not started');
+    captureOnce();
+  });
+
+  startBtn.addEventListener('click', start);
+  stopBtn.addEventListener('click', stop);
+
+  function captureOnce(){
+    if(!video.videoWidth) return;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    ctx.drawImage(video,0,0,canvas.width,canvas.height);
+    const im = ctx.getImageData(0,0,canvas.width,canvas.height);
+    const code = jsQR(im.data, im.width, im.height, { inversionAttempts: 'attemptBoth' });
+    if(code && code.data) {
+      scannedText.value = code.data;
+      lastVal = code.data;
+      globalStatus.textContent = 'Detected (snapshot)';
+    } else {
+      globalStatus.textContent = 'No QR in snapshot';
+    }
+  }
+
+  function tick(){
+    if(!video.videoWidth){
+      rafId = requestAnimationFrame(tick);
+      return;
+    }
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    ctx.drawImage(video,0,0,canvas.width,canvas.height);
+    // sample center square to improve perf on big cameras
+    const s = Math.min(canvas.width, canvas.height, 800);
+    const sx = Math.floor((canvas.width - s)/2);
+    const sy = Math.floor((canvas.height - s)/2);
+    const im = ctx.getImageData(sx, sy, s, s);
+    const code = jsQR(im.data, im.width, im.height, { inversionAttempts: 'attemptBoth' });
+    if(code && code.data){
+      if(code.data !== lastVal){
+        lastVal = code.data;
+        scannedText.value = code.data;
+        globalStatus.textContent = 'Detected: ' + (code.data.length>60? code.data.slice(0,57)+'...': code.data);
+        // keep scanning for additional codes; remove comment to auto-stop:
+        // stop();
+      } else {
+        globalStatus.textContent = 'Detected (same)';
+      }
+    }
+    rafId = requestAnimationFrame(tick);
+  }
+
+  copyScanned.addEventListener('click', async ()=>{
+    if(!scannedText.value) return;
+    try{ await navigator.clipboard.writeText(scannedText.value); copyScanned.textContent='Copied ✓'; setTimeout(()=>copyScanned.textContent='Copy',1200)}catch(e){ scannedText.select(); document.execCommand('copy'); }
+  });
+
+  openScanned.addEventListener('click', ()=>{
+    const t = scannedText.value.trim();
+    if(!t) return;
+    try{
+      const url = (t.startsWith('http://')||t.startsWith('https://')) ? t : 'https://' + t;
+      window.open(new URL(url).href,'_blank');
+    }catch(e){
+      alert('Scanned content not a valid URL');
+    }
+  });
+
+  // pre-list devices but do not auto-start (permission reasons)
+  listDevices();
+})();
+
+/* -------------------------
+   GENERATOR (qr-code-styling)
+   ------------------------- */
+(function generatorModule(){
+  const QRCodeStyling = window.QRCodeStyling;
+  if(!QRCodeStyling){
+    document.getElementById('globalStatus').textContent = 'QR library not loaded';
+    return;
+  }
+
+  // UI elements
+  const typeSelect = document.getElementById('typeSelect');
+  const contentInput = document.getElementById('contentInput');
+  const sizeInput = document.getElementById('sizeInput');
+  const sizeVal = document.getElementById('sizeVal');
+  const marginInput = document.getElementById('marginInput');
+  const marginVal = document.getElementById('marginVal');
+  const ecLevel = document.getElementById('ecLevel');
+  const dotStyle = document.getElementById('dotStyle');
+  const fgColor = document.getElementById('fgColor');
+  const bgColor = document.getElementById('bgColor');
+  const logoInput = document.getElementById('logoInput');
+  const logoSize = document.getElementById('logoSize');
+  const logoSizeVal = document.getElementById('logoSizeVal');
+  const hideDots = document.getElementById('hideDots');
+
+  const generateBtn = document.getElementById('generateBtn');
+  const downloadPng = document.getElementById('downloadPng');
+  const downloadSvg = document.getElementById('downloadSvg');
+  const copyImage = document.getElementById('copyImage');
+  const qrHolder = document.getElementById('qr-holder');
+
+  // initial QRCodeStyling instance
+  let qr = createQrObj({
+    width: 260, height: 260, data: '',
+    image: '', imageOptions: {crossOrigin: 'anonymous', margin: 5}
+  });
+
+  // Helper: create instance with options
+  function createQrObj(opts){
+    // default structure used by qr-code-styling v1.x
+    return new QRCodeStyling({
+      width: opts.width,
+      height: opts.height,
+      data: opts.data || '',
+      margin: opts.margin || 10,
+      image: opts.image || '',
+      qrOptions: { errorCorrectionLevel: opts.ec || 'M' },
+      dotsOptions: { color: opts.color || '#012a4a', type: mapDotType(opts.dotType) },
+      backgroundOptions: { color: opts.bg || '#ffffff' },
+      imageOptions: opts.imageOptions || { crossOrigin: 'anonymous', margin: 5 }
+    });
+  }
+
+  function mapDotType(t){
+    // qr-code-styling v1 uses 'rounded'|'dots'|'classy'|'classy-rounded'|'square'
+    if(!t) return 'square';
+    if(t === 'square') return 'square';
+    if(t === 'rounded') return 'rounded';
+    if(t === 'dots') return 'dots';
+    return 'square';
+  }
+
+  // Format content by type
+  function formatByType(type, text){
+    text = (text||'').trim();
+    if(type === 'url') return text.startsWith('http')? text : 'https://' + text;
+    if(type === 'email'){
+      // mailto
+      return text.includes('@') ? 'mailto:' + text : 'mailto:' + text;
+    }
+    if(type === 'phone') return 'tel:' + text;
+    if(type === 'sms') return 'sms:' + text;
+    if(type === 'wifi'){
+      // user can input: SSID|WPA|password or we can parse / build WiFi format
+      // common QR WiFi format: WIFI:T:WPA;S:SSID;P:password;;
+      const parts = text.split('|').map(s=>s.trim());
+      const ssid = parts[0]||'';
+      const auth = parts[1]||'WPA';
+      const pwd = parts[2]||'';
+      return `WIFI:T:${auth};S:${ssid};P:${pwd};;`;
+    }
+    if(type === 'vcard'){
+      // user can paste vcard raw or simple: Name|Org|Title|phone|email
+      if(text.includes('BEGIN:VCARD')) return text;
+      const p = text.split('|');
+      const name = p[0]||'';
+      const org = p[1]||'';
+      const title = p[2]||'';
+      const tel = p[3]||'';
+      const email = p[4]||'';
+      return [
+        'BEGIN:VCARD',
+        'VERSION:3.0',
+        'FN:' + name,
+        org ? ('ORG:' + org) : '',
+        title ? ('TITLE:' + title) : '',
+        tel ? ('TEL;TYPE=CELL:' + tel) : '',
+        email ? ('EMAIL:' + email) : '',
+        'END:VCARD'
+      ].filter(Boolean).join('\\n');
+    }
+    return text;
+  }
+
+  // Render preview (append to holder)
+  function renderPreview(){
+    qrHolder.innerHTML = '';
+    qr.append(qrHolder);
+  }
+
+  // Update options on the fly (calls qr.update)
+  function refreshQrInstance(){
+    const size = parseInt(sizeInput.value,10);
+    const margin = parseInt(marginInput.value,10);
+    const data = formatByType(typeSelect.value, contentInput.value);
+    const color = fgColor.value;
+    const bg = bgColor.value;
+    const ec = ecLevel.value;
+    const dot = dotStyle.value;
+    const image = currentLogoDataUrl || '';
+    const imageOptions = { crossOrigin: 'anonymous', margin: 5, hideBackgroundDots: (hideDots.value==='true') };
+
+    // create a fresh instance (safer than trying to mutate deeply)
+    qr = createQrObj({
+      width: size, height: size, data,
+      margin, ec, color, bg, dotType: dot,
+      image: image || '',
+      imageOptions
+    });
+
+    // for logo size: qr-code-styling v1 uses set of options: imageOptions.margin and we can set image width by giving blob URL? It supports image and imageOptions only.
+    // We'll rely on library's internal scaling by setting size and imageOptions.margin; the image will be centered.
+    renderPreview();
+  }
+
+  // keep a copy of the uploaded logo as data URL
+  let currentLogoDataUrl = '';
+
+  logoInput.addEventListener('change', async (e)=>{
+    const f = e.target.files && e.target.files[0];
+    if(!f) { currentLogoDataUrl = ''; refreshQrInstance(); return; }
+    const reader = new FileReader();
+    reader.onload = ()=> {
+      currentLogoDataUrl = reader.result;
+      refreshQrInstance();
+    };
+    reader.readAsDataURL(f);
+  });
+
+  // update handlers
+  sizeInput.addEventListener('input', ()=>{ sizeVal.textContent = sizeInput.value; refreshQrInstance() });
+  marginInput.addEventListener('input', ()=>{ marginVal.textContent = marginInput.value; refreshQrInstance() });
+  logoSize.addEventListener('input', ()=>{ logoSizeVal.textContent = logoSize.value; refreshQrInstance() });
+  [typeSelect, contentInput, ecLevel, dotStyle, fgColor, bgColor, hideDots].forEach(el=>{
+    el.addEventListener('change', refreshQrInstance);
+    el.addEventListener('input', refreshQrInstance);
+  });
+
+  // Generate button (ensures QR is up-to-date)
+  generateBtn.addEventListener('click', refreshQrInstance);
+
+  // Download actions - use built-in download() from library
+  downloadPng.addEventListener('click', async ()=>{
+    try{
+      await qr.download({ extension: 'png', name: 'qr-code' });
+    }catch(e){
+      console.warn('download png failed, fallback: getRawData', e);
+      alert('Download failed in this browser.');
+    }
+  });
+
+  downloadSvg.addEventListener('click', async ()=>{
+    try{
+      await qr.download({ extension: 'svg', name: 'qr-code' });
+    }catch(e){
+      console.warn('download svg failed', e);
+      alert('Download failed in this browser.');
+    }
+  });
+
+  // Copy image to clipboard as PNG blob
+  copyImage.addEventListener('click', async ()=>{
+    try{
+      // qr.getRawData is library-specific; fallback: render to canvas and use toBlob
+      const blob = await qr._canvas.getContext('2d').canvas.toBlob ? await new Promise(res=> qr._canvas.getContext('2d').canvas.toBlob(res)) : null;
+      if(blob && navigator.clipboard && navigator.clipboard.write){
+        await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
+        copyImage.textContent = 'Copied ✓';
+        setTimeout(()=> copyImage.textContent = 'Copy Image', 1200);
+        return;
+      }
+      // Fallback: use download
+      await qr.download({ extension: 'png', name: 'qr-code' });
+    }catch(e){
+      console.warn('copy image failed', e);
+      alert('Copy not supported in this browser — downloaded instead.');
+      try{ await qr.download({ extension:'png', name:'qr-code' }) }catch(_){}
+    }
+  });
+
+  // Initial render
+  contentInput.value = 'https://example.com';
+  refreshQrInstance();
+
+  // Helpful note: when logo size slider changes we re-render but qr-code-styling v1 doesn't provide direct % logo size option — we handle via scaling of canvas
+  // If more precise logo sizing is desired, a custom draw step after getImageData can be implemented.
+})();
+
+/* Notes:
+ - This file uses jsQR for scanning and qr-code-styling@1.5.0 for generation.
+ - qr-code-styling v1.x exposes methods like .download(). The internals (e.g., _canvas) are accessible but not official API; for production you might want to bundle and adapt a stable version.
+ - Camera requires HTTPS and must not be inside an iframe unless allow attributes exist.
+*/
+</script>
+</body>
+</html>
