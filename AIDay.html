@@ -2,16 +2,29 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+
+  <!-- 🚫 No cache hints -->
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0" />
-<meta http-equiv="Pragma" content="no-cache" />
-<meta http-equiv="Expires" content="0" />
-  
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+
   <title>Redirecting...</title>
 
   <script>
     (function () {
-      const params = new URLSearchParams(window.location.search);
-      const page = params.get("topic");
+      const url = new URL(window.location.href);
+      const params = url.searchParams;
+
+      // 🔁 If ts is missing, reload same URL with ts
+      if (!params.has("ts")) {
+        params.set("ts", Date.now());
+        url.search = params.toString();
+        window.location.replace(url.toString());
+        return;
+      }
+
+      // 👉 Normal redirect logic (runs only when ts exists)
+      const topic = params.get("topic");
 
       const routes = {
         "1": "https://nagarro.com",
@@ -21,14 +34,14 @@
         "5": "https://microsoft.com"
       };
 
-      if (routes[page]) {
-        window.location.replace(routes[page]);
+      if (routes[topic]) {
+        window.location.replace(routes[topic]);
       } else {
         document.addEventListener("DOMContentLoaded", () => {
           document.body.innerHTML = `
             <h2>Invalid redirect</h2>
-            <p>Please provide a valid <code>page</code> parameter.</p>
-            <p>Example: <code>?page=1</code> or <code>?page=2</code></p>
+            <p>Please provide a valid <code>topic</code> parameter.</p>
+            <p>Example: <code>?topic=1</code></p>
           `;
         });
       }
