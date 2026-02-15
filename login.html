@@ -250,6 +250,14 @@
             border-color: #ff9800;
             color: #ef6c00;
         }
+
+        .alert code {
+            background: rgba(0, 0, 0, 0.1);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+        }
     </style>
 </head>
 <body>
@@ -258,6 +266,10 @@
         <h1>Entra ID PKCE Authorization</h1></div>
     
     <div class="content">
+        <div class="alert alert-info" id="fullFlowHint">
+            <strong>💡 Tip:</strong> Add <code>?full=true</code> to the URL for a streamlined experience that only shows the logged-in user info without configuration forms.
+        </div>
+        
         <div class="form-section">
             <div class="step-indicator">
                 <div class="step-number">1</div>
@@ -369,7 +381,12 @@
         // Store the code verifier in localStorage to persist across redirects
         localStorage.setItem('pkce_code_verifier', codeVerifier);
 
-        const redirectUri = window.location.origin + window.location.pathname;
+        // Check if we're in full flow mode and include it in redirect URI
+        const isFullFlow = localStorage.getItem('pkce_full_flow') === 'true';
+        let redirectUri = window.location.origin + window.location.pathname;
+        if (isFullFlow) {
+            redirectUri += '?full=true';
+        }
 
         const authUrl = `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/authorize?` +
             `client_id=${encodeURIComponent(clientId)}` +
@@ -396,7 +413,12 @@
             return;
         }
 
-        const redirectUri = window.location.origin + window.location.pathname;
+        // Check if we're in full flow mode and include it in redirect URI
+        const isFullFlow = localStorage.getItem('pkce_full_flow') === 'true';
+        let redirectUri = window.location.origin + window.location.pathname;
+        if (isFullFlow) {
+            redirectUri += '?full=true';
+        }
 
         // Call Entra ID directly (requires SPA app registration)
         const params = new URLSearchParams();
@@ -475,6 +497,16 @@
         const params = new URLSearchParams(window.location.search);
         const isFullFlow = params.get('full') === 'true';
         
+        // Hide form sections if in full flow mode
+        if (isFullFlow) {
+            const formSections = document.querySelectorAll('.form-section');
+            formSections.forEach(section => section.style.display = 'none');
+            document.querySelectorAll('.divider').forEach(div => div.style.display = 'none');
+            document.querySelectorAll('.result-section:not(#userInfoSection)').forEach(section => section.style.display = 'none');
+            const hint = document.getElementById('fullFlowHint');
+            if (hint) hint.style.display = 'none';
+        }
+        
         if (params.has("code")) {
             // Authorization code received from redirect
             document.getElementById("authCode").value = params.get("code");
@@ -484,7 +516,8 @@
             
             if (isFullFlow || wasFullFlow) {
                 // Automatically exchange the code for token
-                window.history.replaceState({}, document.title, window.location.pathname);
+                const newUrl = isFullFlow ? window.location.pathname + '?full=true' : window.location.pathname;
+                window.history.replaceState({}, document.title, newUrl);
                 await exchangeCode();
             } else {
                 // Manual flow - just clean up the URL
