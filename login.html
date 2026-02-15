@@ -381,12 +381,8 @@
         // Store the code verifier in localStorage to persist across redirects
         localStorage.setItem('pkce_code_verifier', codeVerifier);
 
-        // Check if we're in full flow mode and include it in redirect URI
-        const isFullFlow = localStorage.getItem('pkce_full_flow') === 'true';
-        let redirectUri = window.location.origin + window.location.pathname;
-        if (isFullFlow) {
-            redirectUri += '?full=true';
-        }
+        // Redirect URI must not include query parameters for Azure AD
+        const redirectUri = window.location.origin + window.location.pathname;
 
         const authUrl = `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/authorize?` +
             `client_id=${encodeURIComponent(clientId)}` +
@@ -413,12 +409,8 @@
             return;
         }
 
-        // Check if we're in full flow mode and include it in redirect URI
-        const isFullFlow = localStorage.getItem('pkce_full_flow') === 'true';
-        let redirectUri = window.location.origin + window.location.pathname;
-        if (isFullFlow) {
-            redirectUri += '?full=true';
-        }
+        // Redirect URI must not include query parameters for Azure AD
+        const redirectUri = window.location.origin + window.location.pathname;
 
         // Call Entra ID directly (requires SPA app registration)
         const params = new URLSearchParams();
@@ -495,7 +487,15 @@
     // If redirected back with a ?code=...
     window.onload = async function() {
         const params = new URLSearchParams(window.location.search);
-        const isFullFlow = params.get('full') === 'true';
+        const isFullFlowParam = params.get('full') === 'true';
+        
+        // Check if we're in full flow mode (from URL param or localStorage)
+        const isFullFlow = isFullFlowParam || localStorage.getItem('pkce_full_flow') === 'true';
+        
+        // If full flow initiated via URL param, store it
+        if (isFullFlowParam && !params.has("code")) {
+            localStorage.setItem('pkce_full_flow', 'true');
+        }
         
         // Hide form sections if in full flow mode
         if (isFullFlow) {
@@ -514,18 +514,16 @@
             // Check if this was initiated as a full flow
             const wasFullFlow = localStorage.getItem('pkce_full_flow') === 'true';
             
-            if (isFullFlow || wasFullFlow) {
+            if (wasFullFlow) {
                 // Automatically exchange the code for token
-                const newUrl = isFullFlow ? window.location.pathname + '?full=true' : window.location.pathname;
-                window.history.replaceState({}, document.title, newUrl);
+                window.history.replaceState({}, document.title, window.location.pathname);
                 await exchangeCode();
             } else {
                 // Manual flow - just clean up the URL
                 window.history.replaceState({}, document.title, window.location.pathname);
             }
-        } else if (isFullFlow) {
+        } else if (isFullFlowParam) {
             // ?full=true without code - start the authorization flow
-            localStorage.setItem('pkce_full_flow', 'true');
             await startAuth();
         }
     }
