@@ -311,6 +311,13 @@
             <h3>Decoded Token Claims</h3>
             <textarea id="decodedToken" rows="12" placeholder="Decoded JWT claims will appear here..."></textarea>
         </div>
+
+        <div class="result-section" id="userInfoSection" style="display: none;">
+            <h3>Logged In User</h3>
+            <div class="form-section" style="background: #e8f5e9; border-color: #4caf50;">
+                <div id="userInfo" style="font-family: 'Segoe UI', sans-serif;"></div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -415,20 +422,78 @@
         if (data.access_token) {
             const decodedToken = decodeJWT(data.access_token);
             document.getElementById("decodedToken").value = JSON.stringify(decodedToken, null, 2);
+            
+            // Display user information
+            displayUserInfo(decodedToken);
         } else if (data.error) {
             document.getElementById("decodedToken").value = "Token exchange failed - see Access Token section for error details";
         }
         
         // Clear the stored code verifier after use (successful or failed)
         localStorage.removeItem('pkce_code_verifier');
+        localStorage.removeItem('pkce_full_flow');
+    }
+
+    function displayUserInfo(decodedToken) {
+        if (!decodedToken || !decodedToken.payload) {
+            return;
+        }
+
+        const payload = decodedToken.payload;
+        const userInfoSection = document.getElementById('userInfoSection');
+        const userInfo = document.getElementById('userInfo');
+        
+        let html = '<div style="line-height: 1.8;">';
+        
+        if (payload.name) {
+            html += `<div style="margin-bottom: 10px;"><strong style="color: #2e7d32;">Name:</strong> ${payload.name}</div>`;
+        }
+        if (payload.unique_name || payload.upn || payload.preferred_username) {
+            const email = payload.unique_name || payload.upn || payload.preferred_username;
+            html += `<div style="margin-bottom: 10px;"><strong style="color: #2e7d32;">Email:</strong> ${email}</div>`;
+        }
+        if (payload.sub) {
+            html += `<div style="margin-bottom: 10px;"><strong style="color: #2e7d32;">Subject:</strong> ${payload.sub}</div>`;
+        }
+        if (payload.oid) {
+            html += `<div style="margin-bottom: 10px;"><strong style="color: #2e7d32;">Object ID:</strong> ${payload.oid}</div>`;
+        }
+        if (payload.tid) {
+            html += `<div style="margin-bottom: 10px;"><strong style="color: #2e7d32;">Tenant ID:</strong> ${payload.tid}</div>`;
+        }
+        if (payload.roles && payload.roles.length > 0) {
+            html += `<div style="margin-bottom: 10px;"><strong style="color: #2e7d32;">Roles:</strong> ${payload.roles.join(', ')}</div>`;
+        }
+        
+        html += '</div>';
+        userInfo.innerHTML = html;
+        userInfoSection.style.display = 'block';
     }
 
     // If redirected back with a ?code=...
-    window.onload = function() {
+    window.onload = async function() {
         const params = new URLSearchParams(window.location.search);
+        const isFullFlow = params.get('full') === 'true';
+        
         if (params.has("code")) {
+            // Authorization code received from redirect
             document.getElementById("authCode").value = params.get("code");
-            window.history.replaceState({}, document.title, window.location.pathname); // remove query
+            
+            // Check if this was initiated as a full flow
+            const wasFullFlow = localStorage.getItem('pkce_full_flow') === 'true';
+            
+            if (isFullFlow || wasFullFlow) {
+                // Automatically exchange the code for token
+                window.history.replaceState({}, document.title, window.location.pathname);
+                await exchangeCode();
+            } else {
+                // Manual flow - just clean up the URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        } else if (isFullFlow) {
+            // ?full=true without code - start the authorization flow
+            localStorage.setItem('pkce_full_flow', 'true');
+            await startAuth();
         }
     }
 </script>
