@@ -499,7 +499,8 @@
         
         // Hide form sections if in full flow mode
         if (isFullFlow) {
-            const formSections = document.querySelectorAll('.form-section');
+            // Hide only the top-level form sections (not the one inside userInfoSection)
+            const formSections = document.querySelectorAll('.content > .form-section');
             formSections.forEach(section => section.style.display = 'none');
             document.querySelectorAll('.divider').forEach(div => div.style.display = 'none');
             document.querySelectorAll('.result-section:not(#userInfoSection)').forEach(section => section.style.display = 'none');
